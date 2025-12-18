@@ -27,11 +27,9 @@ class Error(BaseModel):
 class APIResponse(BaseModel, Generic[T]):
     success: bool
     data: Optional[T] = None
-    meta: Optional[Metadata] = None
+    meta: Optional[Metadata] = None    
     error: Optional[Error] = None
 
     def model_dump(self, **kwargs):
         kwargs.setdefault("exclude_none", True)
         return super().model_dump(**kwargs)
-
-

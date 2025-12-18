@@ -6,9 +6,9 @@ from app.schemas.response import APIResponse, Error, ErrorDetail
 def response_handler() -> APIResponse:
     def decorator(func: Callable):
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        async def wrapper(*args, **kwargs):
             try:
-                result = func(*args, **kwargs)
+                result = await func(*args, **kwargs)
             except HTTPException:
                 raise
             except Exception:

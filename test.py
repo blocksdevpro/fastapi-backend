@@ -10,7 +10,7 @@ app = FastAPI()
 
 @app.get("/")
 @response_handler()
-def read_root():
+async def read_root():
     raise Exception("value")
 
 
