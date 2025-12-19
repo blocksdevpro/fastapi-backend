@@ -1,23 +1,25 @@
-from app.handlers.response import response_handler
-from app.handlers.exception import http_exception_handler, validation_exception_handler, rate_limit_exception_handler
-from fastapi.exceptions import HTTPException, RequestValidationError
-from fastapi import FastAPI
-from fastapi.requests import Request
+import asyncio
+import hashlib
+from app.services.token import JwtService
 
 
-app = FastAPI()
+async def main():
+    service = JwtService("access", "abc", "HS256", 15)
+    payload = {"sub": "1", "email": "mail@blocksdev.pro"}
 
+    token_str = service.encode_token(payload)
+    print(token_str)
+    token = service.decode_token(token_str)
 
-@app.get("/")
-@response_handler()
-async def read_root():
-    raise Exception("value")
+    token_hash = hashlib.sha256(f"{token_str}".encode()).hexdigest()
+    legacy_hash = hashlib.sha256(
+        f"{token_str}-{token.sub}-{token.iat}".encode()
+    ).hexdigest()
 
-
-app.add_exception_handler(HTTPException, http_exception_handler)
-app.add_exception_handler(RequestValidationError, validation_exception_handler)
+    print(f"Token hash and Legacy hash same > {token_hash == legacy_hash}")
+    print(f"Token hash > {token_hash}")
+    print(f"Legacy hash > {legacy_hash}")
 
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="localhost", port=8000)
+    asyncio.run(main())

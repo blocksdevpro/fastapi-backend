@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 T = TypeVar("T")
 
+
 class PaginationMetadata(BaseModel):
     page: int
     limit: int
@@ -14,9 +15,11 @@ class PaginationMetadata(BaseModel):
 class Metadata(BaseModel):
     pagination: Optional[PaginationMetadata] = None
 
+
 class ErrorDetail(BaseModel):
     field: str
     message: str
+
 
 class Error(BaseModel):
     code: int
@@ -27,7 +30,7 @@ class Error(BaseModel):
 class APIResponse(BaseModel, Generic[T]):
     success: bool
     data: Optional[T] = None
-    meta: Optional[Metadata] = None    
+    meta: Optional[Metadata] = None
     error: Optional[Error] = None
 
     def model_dump(self, **kwargs):

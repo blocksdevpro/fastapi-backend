@@ -4,10 +4,12 @@ from datetime import datetime
 from uuid import UUID
 from typing import Optional
 
+
 class UserCreate(BaseModel):
     name: str
     email: str
     password: str
+
 
 class UserResponse(BaseModel):
     id: str | UUID

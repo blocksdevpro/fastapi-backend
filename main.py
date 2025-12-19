@@ -3,6 +3,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.core.slowapi import limiter
 
+# import routers
+from app.routers.users import router as users_router
+from app.routers.auth import router as auth_router
+
+
+# import exception handlers
+from app.handlers.exception import (
+    http_exception_handler,
+    validation_exception_handler,
+    rate_limit_exception_handler,
+)
+from fastapi.exceptions import HTTPException, RequestValidationError
+from slowapi.errors import RateLimitExceeded
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -30,16 +44,8 @@ app.add_middleware(
 )
 
 
-# import and include routers
-from app.routers.users import router as users_router
-
 app.include_router(users_router)
-
-
-# import and include exception handlers
-from app.handlers.exception import http_exception_handler, validation_exception_handler, rate_limit_exception_handler
-from fastapi.exceptions import HTTPException, RequestValidationError
-from slowapi.errors import RateLimitExceeded
+app.include_router(auth_router)
 
 app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
@@ -48,4 +54,5 @@ app.add_exception_handler(RateLimitExceeded, rate_limit_exception_handler)
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
