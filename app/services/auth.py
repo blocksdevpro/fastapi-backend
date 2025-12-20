@@ -1,12 +1,12 @@
 from app.services.base import BaseService
-from typing import Annotated
+from typing import Annotated, Optional
 from fastapi import Depends, HTTPException, Request, status
 from app.db.session import AsyncSession, get_session
 from sqlalchemy import select
 from app.models.user import User
 from app.services.password import PasswordService
 from app.schemas.auth import RefreshRequest, SignupRequest, LoginRequest, AuthResponse
-from app.services.token import TokenService
+from app.services.token import Token, TokenService
 
 
 class AuthService(BaseService):
@@ -21,11 +21,19 @@ class AuthService(BaseService):
         self.token_service = token_service
         super().__init__()
 
-    async def _find_user(self, email: str) -> User:
-        query = select(User).where(User.email == email)
+    async def _find_user(self, email: str) -> Optional[User]:
         self.logger.info("Finding user with email: {}".format(email))
+        query = select(User).where(User.email == email)
 
-        return (await self.session.execute(query)).scalar_one_or_none()
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()
+
+    async def _find_user_by_id(self, user_id: str) -> Optional[User]:
+        self.logger.info("Finding user with user_id: {}".format(user_id))
+        query = select(User).where(User.id == user_id)
+
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()
 
     async def _create_user(self, name: str, email: str, password: str):
         user = User(name=name, email=email, hashed_password=password)
@@ -60,10 +68,18 @@ class AuthService(BaseService):
 
     async def refresh(self, request: Request, payload: RefreshRequest) -> AuthResponse:
         token = await self.token_service.validate_refresh_token(payload.refresh_token)
-        user = await self._find_user(token.email)
+        user = await self._find_user_by_id(token.sub)
         tokens = await self.token_service.create_tokens(request, user)
 
         return AuthResponse(
             user=user.to_response(),
             tokens=tokens,
         )
+
+    async def current_user(self, token: Token) -> User:
+        user = await self._find_user_by_id(token.sub)
+        if not user:
+            raise HTTPException(
+                status.HTTP_401_UNAUTHORIZED, "Invalid or expired access token"
+            )
+        return user

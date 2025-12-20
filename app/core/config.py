@@ -1,8 +1,10 @@
+from pydantic import ConfigDict
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
     DATABASE_URL: str
+    TEST_DATABASE_URL: str
 
     BCRYPT_ROUNDS: int
     JWT_ALGORITHM: str
@@ -13,10 +15,11 @@ class Settings(BaseSettings):
     JWT_ACCESS_EXPIRE_MINUTES: int
     JWT_REFRESH_EXPIRE_MINUTES: int
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = True
+    model_config = ConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+    )
 
 
 settings = Settings()

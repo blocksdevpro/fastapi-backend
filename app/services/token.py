@@ -61,7 +61,8 @@ class JwtService(BaseService):
                     f"Token type mismatch. Expected: {self.token_type}, Got: {payload.get('type')}"
                 )
                 raise HTTPException(
-                    status.HTTP_401_UNAUTHORIZED, f"Invalid {self.token_type} token!"
+                    status.HTTP_401_UNAUTHORIZED,
+                    f"Invalid or expired {self.token_type} token!",
                 )
 
             return Token(
@@ -73,7 +74,8 @@ class JwtService(BaseService):
             )
         except JWTError:
             raise HTTPException(
-                status.HTTP_401_UNAUTHORIZED, f"Invalid {self.token_type} token!"
+                status.HTTP_401_UNAUTHORIZED,
+                f"Invalid or expired {self.token_type} token!",
             )
 
 
