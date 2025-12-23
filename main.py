@@ -4,8 +4,8 @@ from contextlib import asynccontextmanager
 from app.core.slowapi import limiter
 
 # import routers
-from app.routers.users import router as users_router
 from app.routers.auth import router as auth_router
+# from app.routers.users import router as users_router
 
 
 # import exception handlers
@@ -44,8 +44,8 @@ app.add_middleware(
 )
 
 
-app.include_router(users_router)
 app.include_router(auth_router)
+# app.include_router(users_router)
 
 app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
