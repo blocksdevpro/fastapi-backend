@@ -70,11 +70,17 @@ class AuthService(BaseService):
         token = await self.token_service.validate_refresh_token(payload.refresh_token)
         user = await self._find_user_by_id(token.sub)
         tokens = await self.token_service.create_tokens(request, user)
+        await self.token_service.update_refresh_token_usage(
+            token, payload.refresh_token, user.id
+        )
 
         return AuthResponse(
             user=user.to_response(),
             tokens=tokens,
         )
+
+    async def logout(self, request: Request, payload: RefreshRequest) -> None:
+        return await self.token_service.revoke_refresh_token(payload.refresh_token)
 
     async def current_user(self, token: Token) -> User:
         user = await self._find_user_by_id(token.sub)

@@ -1,6 +1,9 @@
 import hashlib
+
+from sqlalchemy import delete, not_, select, update
+from app.models.refresh_token import RefreshToken
 from app.models.user import User
-from app.schemas.auth import TokenResponse
+from app.schemas.auth import LogoutResponse, TokenResponse
 from app.services.base import BaseService
 from datetime import datetime, timedelta, timezone
 from app.core.config import settings
@@ -97,13 +100,13 @@ class TokenService(BaseService):
 
         super().__init__()
 
-    def _hash_str(string: str) -> str:
+    def _hash_str(self, string: str) -> str:
         return hashlib.sha256(string.encode()).hexdigest()
 
-    def _hash_token(self, token: Token, token_str: str):
+    def _hash_token(self, token: Token, token_str: str) -> str:
         return self._hash_str(f"{token_str}-{token.sub}-{token.iat}")
 
-    def _extract_ip_address(self, request: Request):
+    def _extract_ip_address(self, request: Request) -> str:
         headers = request.headers
         for header in ["CF-Connecting-IP", "X-Real-IP", "X-Forwarded-For"]:
             ip_address: str = headers.get(header)
@@ -113,7 +116,7 @@ class TokenService(BaseService):
                 return ip_address
         return getattr(request.client, "host", "Unknown")
 
-    def _generate_device_id(self, request: Request):
+    def _generate_device_id(self, request: Request) -> str:
         ip_address = self._extract_ip_address(request)
         user_agent = request.headers.get("User-Agent", "Unknown")
         accept_language = request.headers.get("Accept-Language", "Unknown")
@@ -135,19 +138,143 @@ class TokenService(BaseService):
         return self.access_token_service.decode_token(token)
 
     async def validate_refresh_token(self, token: str) -> Token:
-        return self.refresh_token_service.decode_token(token)
+        token_payload = self.refresh_token_service.decode_token(token)
+        token_hash = self._hash_token(token_payload, token)
+        refresh_token = self._find_refresh_token(token_hash)
+        if not refresh_token:
+            raise HTTPException(
+                status.HTTP_401_UNAUTHORIZED, "Invalid or expired refresh token!"
+            )
+        return token_payload
+
+    async def _find_refresh_token(self, token_hash: str) -> RefreshToken:
+        result = await self.session.execute(
+            select(RefreshToken).where(
+                RefreshToken.token_hash == token_hash, not_(RefreshToken.revoked)
+            )
+        )
+        return result.scalar_one_or_none()
 
     async def create_tokens(
-        self, request: Request, user: User, access_only=False
+        self, request: Request, user: User, refresh=False
     ) -> TokenResponse:
         payload = {"sub": str(user.id), "email": user.email}
 
         access_token = await self._create_access_token(payload)
-        refresh_token = "" if access_only else await self._create_refresh_token(payload)
-        token_type = "refresh" if access_only else "bearer"
+        refresh_token = "" if refresh else await self._create_refresh_token(payload)
+        token_type = "refresh" if refresh else "bearer"
+
+        if not refresh:
+            await self.save_refresh_token(request, refresh_token, user.id)
 
         return TokenResponse(
             access_token=access_token,
             refresh_token=refresh_token,
             token_type=token_type,
         )
+
+    async def cleanup_device_tokens(self, user_id: str, device_id: str) -> None:
+        try:
+            await self.session.execute(
+                delete(RefreshToken).where(
+                    RefreshToken.user_id == user_id,
+                    RefreshToken.device_id == device_id,
+                )
+            )
+            await self.session.commit()
+        except Exception as e:
+            self.logger.error(f"Error cleaning up device tokens: {e}")
+            await self.session.rollback()
+
+    async def cleanup_max_device_tokens(self, user_id: str) -> None:
+        try:
+            tokens = await self.session.execute(
+                select(RefreshToken)
+                .where(RefreshToken.user_id == user_id)
+                .order_by(RefreshToken.last_used_at.desc())
+            )
+            tokens = tokens.scalars().all()
+            if tokens and len(tokens) > 3:
+                tokens_to_revoke = tokens[3:]
+                token_ids_to_revoke = [item.id for item in tokens_to_revoke]
+
+                await self.session.execute(
+                    update(RefreshToken)
+                    .where(RefreshToken.id.in_(token_ids_to_revoke))
+                    .values(revoked=True)
+                )
+                await self.session.commit()
+        except Exception as e:
+            self.logger.error(f"Error cleaning up max device tokens: {e}")
+            await self.session.rollback()
+
+    async def cleanup_expired_tokens(self, user_id: str) -> None:
+        try:
+            current_time = datetime.now(timezone.utc)
+            await self.session.execute(
+                update(RefreshToken)
+                .where(
+                    RefreshToken.user_id == user_id,
+                    RefreshToken.expires_at < current_time,
+                )
+                .values(revoked=True)
+            )
+            await self.session.commit()
+        except Exception as e:
+            self.logger.error(f"Error cleaning up expired tokens: {e}")
+            await self.session.rollback()
+
+    async def save_refresh_token(
+        self, request: Request, token: str, user_id: str
+    ) -> None:
+        token_payload = self.refresh_token_service.decode_token(token)
+        token_hash = self._hash_token(token_payload, token)
+        device_id = self._generate_device_id(request)
+        ip_address = self._extract_ip_address(request)
+        user_agent = request.headers.get("User-Agent", "Unknown")[:500]  # Truncate
+
+        await self.cleanup_expired_tokens(user_id)
+        await self.cleanup_device_tokens(user_id, device_id)
+
+        refresh_token = RefreshToken(
+            user_id=user_id,
+            device_id=device_id,
+            token_hash=token_hash,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            expires_at=datetime.fromtimestamp(token_payload.exp, timezone.utc),
+            last_used_at=datetime.now(timezone.utc),
+        )
+
+        self.session.add(refresh_token)
+        await self.session.commit()
+
+        await self.cleanup_max_device_tokens(user_id)
+
+    async def update_refresh_token_usage(
+        self, token: Token, token_str: str, user_id: str
+    ):
+        token_hash = self._hash_token(token)
+        await self.session.execute(
+            update(RefreshToken)
+            .where(
+                RefreshToken.token_hash == token_hash, RefreshToken.user_id == user_id
+            )
+            .values(last_used_at=datetime.now(timezone.utc))
+        )
+
+    async def revoke_refresh_token(self, token: str) -> LogoutResponse:
+        token_payload = self.refresh_token_service.decode_token(token)
+        token_hash = self._hash_token(token_payload, token)
+
+        await self.session.execute(
+            update(RefreshToken)
+            .where(
+                RefreshToken.token_hash == token_hash,
+                RefreshToken.user_id == token_payload.sub,
+                not_(RefreshToken.revoked),
+            )
+            .values(revoked=True)
+        )
+        await self.session.commit()
+        return LogoutResponse(message="Successfully logged out of the session!")

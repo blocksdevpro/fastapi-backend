@@ -2,8 +2,18 @@
 
 from fastapi import APIRouter, Request
 
-from app.dependencies import AuthServiceDependency, CurrentUserTokenDependency
-from app.schemas.auth import AuthResponse, RefreshRequest, SignupRequest, LoginRequest
+from app.dependencies import (
+    AuthServiceDependency,
+    CurrentUserDependency,
+    CurrentUserTokenDependency,
+)
+from app.schemas.auth import (
+    AuthResponse,
+    LogoutResponse,
+    RefreshRequest,
+    SignupRequest,
+    LoginRequest,
+)
 
 from app.handlers.response import response_handler
 from app.schemas.response import APIResponse
@@ -34,6 +44,17 @@ async def refresh(
     request: Request, payload: RefreshRequest, auth_service: AuthServiceDependency
 ):
     return await auth_service.refresh(request, payload)
+
+
+@router.post("/logout", response_model=APIResponse[LogoutResponse])
+@response_handler()
+async def logout(
+    request: Request,
+    payload: RefreshRequest,
+    auth_service: AuthServiceDependency,
+    user: CurrentUserDependency,
+):
+    return await auth_service.logout(request, payload)
 
 
 @router.get("/me", response_model=APIResponse[UserResponse])

@@ -1,13 +1,7 @@
 # app/routers/users.py
 
-from uuid import UUID
-from typing import List
 from fastapi.routing import APIRouter
-from app.schemas.user import UserResponse, UserCreate
-from app.dependencies import UserServiceDependency
 
-from app.schemas.response import APIResponse
-from app.handlers.response import response_handler
 
 router = APIRouter(
     prefix="/users",
