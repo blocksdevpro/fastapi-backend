@@ -140,7 +140,7 @@ class TokenService(BaseService):
     async def validate_refresh_token(self, token: str) -> Token:
         token_payload = self.refresh_token_service.decode_token(token)
         token_hash = self._hash_token(token_payload, token)
-        refresh_token = self._find_refresh_token(token_hash)
+        refresh_token = await self._find_refresh_token(token_hash)
         if not refresh_token:
             raise HTTPException(
                 status.HTTP_401_UNAUTHORIZED, "Invalid or expired refresh token!"
@@ -254,7 +254,7 @@ class TokenService(BaseService):
     async def update_refresh_token_usage(
         self, token: Token, token_str: str, user_id: str
     ):
-        token_hash = self._hash_token(token)
+        token_hash = self._hash_token(token, token_str)
         await self.session.execute(
             update(RefreshToken)
             .where(

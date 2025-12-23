@@ -2,12 +2,11 @@ from httpx import AsyncClient, Response
 import pytest
 
 from app.schemas.auth import AuthResponse, SignupRequest, LoginRequest
-from app.schemas.response import APIResponse
 
 
 user_credentials = {"name": "Uttam", "email": "mail@uttam.com", "password": "Pass!123"}
 
-auth_response: APIResponse[AuthResponse]
+auth_tokens: AuthResponse
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -24,8 +23,9 @@ async def test_success_signup(client: AsyncClient):
     )
     assert res.status_code == 200
     assert res.json() != {}
-    global auth_response
-    auth_response = APIResponse[AuthResponse](**res.json())
+
+    global auth_tokens
+    auth_tokens = AuthResponse(**res.json()["data"])
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -49,8 +49,8 @@ async def test_success_login(client: AsyncClient):
     assert res.status_code == 200
     assert res.json() != {}
 
-    global auth_response
-    auth_response = APIResponse[AuthResponse](**res.json())
+    global auth_tokens
+    auth_tokens = AuthResponse(**res.json()["data"])
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -65,3 +65,65 @@ async def test_failed_login(client: AsyncClient):
     assert res_json != {}
     assert not res_json["success"]
     assert res_json["error"]["message"] == "Invalid credentials"
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_success_access_token(client: AsyncClient):
+    global auth_tokens
+    res = await client.get(
+        "/auth/me",
+        headers={"Authorization": f"Bearer {auth_tokens.tokens.access_token}"},
+    )
+    assert res.status_code == 200
+    res_json = res.json()
+
+    assert res_json != {}
+    assert res_json["success"]
+    assert res_json["data"]["id"]
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_success_refresh_token(client: AsyncClient):
+    global auth_tokens
+    res = await client.post(
+        "/auth/refresh",
+        json={"refresh_token": auth_tokens.tokens.refresh_token},
+    )
+    assert res.status_code == 200
+    res_json = res.json()
+
+    assert res_json != {}
+    assert res_json["success"]
+    assert res_json["data"]["tokens"]
+
+    auth_tokens.tokens.access_token = res_json["data"]["tokens"]["access_token"]
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_success_logout_token(client: AsyncClient):
+    global auth_tokens
+    res = await client.post(
+        "/auth/logout",
+        json={"refresh_token": auth_tokens.tokens.refresh_token},
+        headers={"Authorization": f"Bearer {auth_tokens.tokens.access_token}"},
+    )
+    assert res.status_code == 200
+    res_json = res.json()
+
+    assert res_json != {}
+    assert res_json["success"]
+    assert res_json["data"]["message"]
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_failed_refresh_token(client: AsyncClient):
+    global auth_tokens
+    res = await client.post(
+        "/auth/refresh",
+        json={"refresh_token": auth_tokens.tokens.refresh_token},
+    )
+    assert res.status_code == 401
+    res_json = res.json()
+
+    assert res_json != {}
+    assert not res_json["success"]
