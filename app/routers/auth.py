@@ -1,7 +1,7 @@
 # app/routers/auth.py
 
 from uuid import UUID
-from fastapi import APIRouter, Request
+from fastapi import Request
 
 from app.dependencies import (
     AuthServiceDependency,
@@ -17,15 +17,14 @@ from app.schemas.auth import (
     LoginRequest,
 )
 
-from app.handlers.response import response_handler
 from app.schemas.response import APIResponse
 from app.schemas.user import UserResponse
+from app.utils.router import AutoAPIResponseRouter
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = AutoAPIResponseRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/signup", response_model=APIResponse[AuthResponse])
-@response_handler()
 async def signup(
     request: Request, payload: SignupRequest, auth_service: AuthServiceDependency
 ):
@@ -33,7 +32,6 @@ async def signup(
 
 
 @router.post("/login", response_model=APIResponse[AuthResponse])
-@response_handler()
 async def login(
     request: Request, payload: LoginRequest, auth_service: AuthServiceDependency
 ):
@@ -41,7 +39,6 @@ async def login(
 
 
 @router.post("/refresh", response_model=APIResponse[AuthResponse])
-@response_handler()
 async def refresh(
     request: Request, payload: RefreshRequest, auth_service: AuthServiceDependency
 ):
@@ -49,7 +46,6 @@ async def refresh(
 
 
 @router.post("/logout", response_model=APIResponse[MessageResponse])
-@response_handler()
 async def logout(
     request: Request,
     payload: RefreshRequest,
@@ -60,7 +56,6 @@ async def logout(
 
 
 @router.get("/me", response_model=APIResponse[UserResponse])
-@response_handler()
 async def current_user(
     request: Request,
     token: CurrentUserTokenDependency,
@@ -70,7 +65,6 @@ async def current_user(
 
 
 @router.get("/sessions", response_model=APIResponse[list[SessionResponse]])
-@response_handler()
 async def sessions(
     request: Request,
     user: CurrentUserDependency,
@@ -80,7 +74,6 @@ async def sessions(
 
 
 @router.get("/revoke", response_model=APIResponse[MessageResponse])
-@response_handler()
 async def revoke(
     request: Request,
     session_id: UUID,
