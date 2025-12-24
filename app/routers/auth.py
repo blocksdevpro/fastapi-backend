@@ -1,5 +1,6 @@
 # app/routers/auth.py
 
+from uuid import UUID
 from fastapi import APIRouter, Request
 
 from app.dependencies import (
@@ -9,8 +10,9 @@ from app.dependencies import (
 )
 from app.schemas.auth import (
     AuthResponse,
-    LogoutResponse,
+    MessageResponse,
     RefreshRequest,
+    SessionResponse,
     SignupRequest,
     LoginRequest,
 )
@@ -46,7 +48,7 @@ async def refresh(
     return await auth_service.refresh(request, payload)
 
 
-@router.post("/logout", response_model=APIResponse[LogoutResponse])
+@router.post("/logout", response_model=APIResponse[MessageResponse])
 @response_handler()
 async def logout(
     request: Request,
@@ -65,3 +67,24 @@ async def current_user(
     auth_service: AuthServiceDependency,
 ):
     return await auth_service.current_user(token)
+
+
+@router.get("/sessions", response_model=APIResponse[list[SessionResponse]])
+@response_handler()
+async def sessions(
+    request: Request,
+    user: CurrentUserDependency,
+    auth_service: AuthServiceDependency,
+):
+    return await auth_service.get_sessions(user)
+
+
+@router.get("/revoke", response_model=APIResponse[MessageResponse])
+@response_handler()
+async def revoke(
+    request: Request,
+    session_id: UUID,
+    user: CurrentUserDependency,
+    auth_service: AuthServiceDependency,
+):
+    return await auth_service.revoke(user, session_id)

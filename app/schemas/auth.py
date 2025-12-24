@@ -1,4 +1,6 @@
+from uuid import UUID
 from typing import Optional
+from datetime import datetime
 from pydantic import BaseModel
 
 from app.schemas.user import UserResponse
@@ -30,5 +32,16 @@ class AuthResponse(BaseModel):
     tokens: TokenResponse
 
 
-class LogoutResponse(BaseModel):
+class MessageResponse(BaseModel):
     message: str
+
+
+class SessionResponse(BaseModel):
+    id: str | UUID
+    user_id: str
+    device_id: str
+    ip_address: str
+    last_used_at: datetime
+    expires_at: datetime
+    created_at: datetime
+    updated_at: Optional[datetime]

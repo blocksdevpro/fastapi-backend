@@ -35,7 +35,7 @@ class RefreshToken(TimestampMixin, Base):
     def to_response(self):
         return {
             "id": str(self.id),
-            "user_id": self.user_id,
+            "user_id": str(self.user_id),
             "device_id": self.device_id,
             "ip_address": self.ip_address,
             "last_used_at": self.last_used_at,

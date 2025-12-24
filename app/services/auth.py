@@ -1,3 +1,4 @@
+from app.models.refresh_token import RefreshToken
 from app.services.base import BaseService
 from typing import Annotated, Optional
 from fastapi import Depends, HTTPException, Request, status
@@ -5,7 +6,13 @@ from app.db.session import AsyncSession, get_session
 from sqlalchemy import select
 from app.models.user import User
 from app.services.password import PasswordService
-from app.schemas.auth import RefreshRequest, SignupRequest, LoginRequest, AuthResponse
+from app.schemas.auth import (
+    MessageResponse,
+    RefreshRequest,
+    SignupRequest,
+    LoginRequest,
+    AuthResponse,
+)
 from app.services.token import Token, TokenService
 
 
@@ -79,7 +86,9 @@ class AuthService(BaseService):
             tokens=tokens,
         )
 
-    async def logout(self, request: Request, payload: RefreshRequest) -> None:
+    async def logout(
+        self, request: Request, payload: RefreshRequest
+    ) -> MessageResponse:
         return await self.token_service.revoke_refresh_token(payload.refresh_token)
 
     async def current_user(self, token: Token) -> User:
@@ -89,3 +98,11 @@ class AuthService(BaseService):
                 status.HTTP_401_UNAUTHORIZED, "Invalid or expired access token"
             )
         return user
+
+    async def get_sessions(self, user: User) -> list[RefreshToken]:
+        return await self.token_service.find_active_sessions(user.id)
+
+    async def revoke(self, user: User, session_id: str) -> MessageResponse:
+        result = await self.token_service.revoke_session(user.id, session_id)
+        print("result:", result)
+        return result

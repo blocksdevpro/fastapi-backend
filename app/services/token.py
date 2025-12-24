@@ -3,7 +3,7 @@ import hashlib
 from sqlalchemy import delete, not_, select, update
 from app.models.refresh_token import RefreshToken
 from app.models.user import User
-from app.schemas.auth import LogoutResponse, TokenResponse
+from app.schemas.auth import MessageResponse, TokenResponse
 from app.services.base import BaseService
 from datetime import datetime, timedelta, timezone
 from app.core.config import settings
@@ -155,6 +155,16 @@ class TokenService(BaseService):
         )
         return result.scalar_one_or_none()
 
+    async def _find_user_session(self, user_id: str, session_id: str) -> RefreshToken:
+        result = await self.session.execute(
+            select(RefreshToken).where(
+                RefreshToken.user_id == user_id,
+                RefreshToken.id == session_id,
+                not_(RefreshToken.revoked),
+            )
+        )
+        return result.scalar_one_or_none()
+
     async def create_tokens(
         self, request: Request, user: User, refresh=False
     ) -> TokenResponse:
@@ -263,7 +273,7 @@ class TokenService(BaseService):
             .values(last_used_at=datetime.now(timezone.utc))
         )
 
-    async def revoke_refresh_token(self, token: str) -> LogoutResponse:
+    async def revoke_refresh_token(self, token: str) -> MessageResponse:
         token_payload = self.refresh_token_service.decode_token(token)
         token_hash = self._hash_token(token_payload, token)
 
@@ -277,4 +287,23 @@ class TokenService(BaseService):
             .values(revoked=True)
         )
         await self.session.commit()
-        return LogoutResponse(message="Successfully logged out of the session!")
+        return MessageResponse(message="Successfully logged out of the session!")
+
+    async def find_active_sessions(self, user_id: str):
+        result = await self.session.execute(
+            select(RefreshToken)
+            .where(RefreshToken.user_id == user_id, not_(RefreshToken.revoked))
+            .limit(10)
+        )
+        return result.scalars().all()
+
+    async def revoke_session(self, user_id: str, session_id: str):
+        session = await self._find_user_session(user_id, session_id)
+        if session:
+            await self.session.execute(
+                update(RefreshToken)
+                .where(RefreshToken.user_id == user_id, RefreshToken.id == session_id)
+                .values(revoked=True)
+            )
+            await self.session.commit()
+        return MessageResponse(message="Successfully revoked the session!")
