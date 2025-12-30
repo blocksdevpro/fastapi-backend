@@ -1,6 +1,5 @@
-# app/models/refresh_token.py
+# app/models/session.py
 
-from ast import Index
 from datetime import datetime
 from app.db.session import Base
 from sqlalchemy.orm import Mapped, mapped_column
@@ -8,8 +7,8 @@ from sqlalchemy import UUID, Boolean, DateTime, ForeignKey, String, text
 from app.models.common import TimestampMixin
 
 
-class RefreshToken(TimestampMixin, Base):
-    __tablename__ = "refresh_tokens"
+class Session(TimestampMixin, Base):
+    __tablename__ = "sessions"
 
     id: Mapped[UUID] = mapped_column(
         UUID, server_default=text("gen_random_uuid()"), primary_key=True
@@ -26,16 +25,11 @@ class RefreshToken(TimestampMixin, Base):
 
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
 
-    __table_args__ = (
-        Index("ix_user_revoked", "user_id", "revoked"),  # Composite index
-        Index("ix_token_lookup", "user_id", "token_hash", "revoked"),
-    )
-
     def __repr__(self):
-        return f"RefreshToken(id={self.id}, user_id={self.user_id}, device_id={self.device_id}, revoked={self.revoked})"
+        return f"Session(id={self.id}, user_id={self.user_id}, device_id={self.device_id}, revoked={self.revoked})"
 
     def __str__(self):
-        return f"RefreshToken(id={self.id}, user_id={self.user_id}, device_id={self.device_id}, revoked={self.revoked})"
+        return f"Session(id={self.id}, user_id={self.user_id}, device_id={self.device_id}, revoked={self.revoked})"
 
     def to_response(self):
         return {

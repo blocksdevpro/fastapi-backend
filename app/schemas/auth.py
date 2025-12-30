@@ -23,7 +23,7 @@ class RefreshRequest(BaseModel):
 
 class TokenResponse(BaseModel):
     access_token: str
-    refresh_token: Optional[str]
+    refresh_token: str
     token_type: str
 
 
@@ -41,7 +41,6 @@ class SessionResponse(BaseModel):
     user_id: str
     device_id: str
     ip_address: str
-    last_used_at: datetime
     expires_at: datetime
     created_at: datetime
     updated_at: Optional[datetime]

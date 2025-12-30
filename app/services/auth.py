@@ -1,5 +1,5 @@
 from sqlalchemy.exc import IntegrityError
-from app.models.refresh_token import RefreshToken
+from app.models.session import Session
 from app.services.base import BaseService
 from typing import Annotated, Optional
 from fastapi import Depends, HTTPException, Request, status
@@ -14,7 +14,7 @@ from app.schemas.auth import (
     LoginRequest,
     AuthResponse,
 )
-from app.services.token import Token, TokenService
+from app.services.session import Token, SessionService
 
 
 class AuthService(BaseService):
@@ -22,11 +22,11 @@ class AuthService(BaseService):
         self,
         session: Annotated[AsyncSession, Depends(get_session)],
         password_service: Annotated[PasswordService, Depends()],
-        token_service: Annotated[TokenService, Depends()],
+        session_service: Annotated[SessionService, Depends()],
     ):
         self.session = session
         self.password_service = password_service
-        self.token_service = token_service
+        self.session_service = session_service
         super().__init__()
 
     async def _find_user(self, email: str) -> Optional[User]:
@@ -60,7 +60,7 @@ class AuthService(BaseService):
         except IntegrityError:
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "User already exists")
 
-        tokens = await self.token_service.create_tokens(request, user)
+        tokens = await self.session_service.create_tokens(request, user)
 
         return AuthResponse(user=user.to_response(), tokens=tokens)
 
@@ -71,17 +71,14 @@ class AuthService(BaseService):
         ):
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid credentials")
 
-        tokens = await self.token_service.create_tokens(request, user)
+        tokens = await self.session_service.create_tokens(request, user)
 
         return AuthResponse(user=user.to_response(), tokens=tokens)
 
     async def refresh(self, request: Request, payload: RefreshRequest) -> AuthResponse:
-        token = await self.token_service.validate_refresh_token(payload.refresh_token)
+        token, session = await self.session_service.validate_refresh_token(payload.refresh_token)
         user = await self._find_user_by_id(token.sub)
-        tokens = await self.token_service.create_tokens(request, user)
-        await self.token_service.update_refresh_token_usage(
-            token, payload.refresh_token, user.id
-        )
+        tokens = await self.session_service.create_tokens(request, user, session.id)
 
         return AuthResponse(
             user=user.to_response(),
@@ -91,7 +88,7 @@ class AuthService(BaseService):
     async def logout(
         self, request: Request, payload: RefreshRequest
     ) -> MessageResponse:
-        return await self.token_service.revoke_refresh_token(payload.refresh_token)
+        return await self.session_service.revoke_refresh_token(payload.refresh_token)
 
     async def current_user(self, token: Token) -> User:
         user = await self._find_user_by_id(token.sub)
@@ -101,10 +98,10 @@ class AuthService(BaseService):
             )
         return user
 
-    async def get_sessions(self, user: User) -> list[RefreshToken]:
-        return await self.token_service.find_active_sessions(user.id)
+    async def get_sessions(self, user: User) -> list[Session]:
+        return await self.session_service.find_active_sessions(user.id)
 
     async def revoke(self, user: User, session_id: str) -> MessageResponse:
-        result = await self.token_service.revoke_session(user.id, session_id)
+        result = await self.session_service.revoke_session(user.id, session_id)
         print("result:", result)
         return result
