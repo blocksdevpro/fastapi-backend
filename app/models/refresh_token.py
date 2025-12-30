@@ -1,5 +1,6 @@
 # app/models/refresh_token.py
 
+from ast import Index
 from datetime import datetime
 from app.db.session import Base
 from sqlalchemy.orm import Mapped, mapped_column
@@ -24,13 +25,17 @@ class RefreshToken(TimestampMixin, Base):
     revoked: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
 
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
-    last_used_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+
+    __table_args__ = (
+        Index("ix_user_revoked", "user_id", "revoked"),  # Composite index
+        Index("ix_token_lookup", "user_id", "token_hash", "revoked"),
+    )
 
     def __repr__(self):
-        return f"User(id={self.id}, name={self.name}, email={self.email})"
+        return f"RefreshToken(id={self.id}, user_id={self.user_id}, device_id={self.device_id}, revoked={self.revoked})"
 
     def __str__(self):
-        return f"User(id={self.id}, name={self.name}, email={self.email})"
+        return f"RefreshToken(id={self.id}, user_id={self.user_id}, device_id={self.device_id}, revoked={self.revoked})"
 
     def to_response(self):
         return {
@@ -38,7 +43,6 @@ class RefreshToken(TimestampMixin, Base):
             "user_id": str(self.user_id),
             "device_id": self.device_id,
             "ip_address": self.ip_address,
-            "last_used_at": self.last_used_at,
             "expires_at": self.expires_at,
             "created_at": self.created_at,
             "updated_at": self.updated_at,

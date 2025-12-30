@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     JWT_ACCESS_EXPIRE_MINUTES: int
     JWT_REFRESH_EXPIRE_MINUTES: int
 
+    MAX_ACTIVE_SESSIONS: int = 5
+
     model_config = ConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

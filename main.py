@@ -30,7 +30,14 @@ async def lifespan(app: FastAPI):
     await async_engine.dispose()
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    title="Calorine API",
+    description="Calorie tracking backend",
+    version="1.0.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    lifespan=lifespan,
+)
 app.state.limiter = limiter
 
 

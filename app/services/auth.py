@@ -1,3 +1,4 @@
+from sqlalchemy.exc import IntegrityError
 from app.models.refresh_token import RefreshToken
 from app.services.base import BaseService
 from typing import Annotated, Optional
@@ -51,13 +52,14 @@ class AuthService(BaseService):
         return user
 
     async def signup(self, request: Request, payload: SignupRequest) -> AuthResponse:
-        user = await self._find_user(payload.email)
-        if user:
+        try:
+            hashed_password = await self.password_service.hash_password(
+                payload.password
+            )
+            user = await self._create_user(payload.name, payload.email, hashed_password)
+        except IntegrityError:
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "User already exists")
 
-        hashed_password = await self.password_service.hash_password(payload.password)
-
-        user = await self._create_user(payload.name, payload.email, hashed_password)
         tokens = await self.token_service.create_tokens(request, user)
 
         return AuthResponse(user=user.to_response(), tokens=tokens)
