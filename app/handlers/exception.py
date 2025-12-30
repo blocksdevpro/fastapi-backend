@@ -25,7 +25,7 @@ def rate_limit_exception_handler(
             error=Error(code=exception.status_code, message=exception.detail),
         ).model_dump(),
     )
-    response = request.app.state.rate_limiter._inject_headers(
+    response = request.app.state.limiter._inject_headers(
         response, request.state.view_rate_limit
     )
     return response

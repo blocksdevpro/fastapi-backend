@@ -5,7 +5,6 @@ from fastapi import Depends
 from app.db.session import get_session, AsyncSession
 from app.models.user import User
 from app.services.auth import AuthService
-from app.services.user import UserService
 from app.services.password import PasswordService
 from app.services.token import Token, TokenService
 
@@ -15,7 +14,6 @@ from app.core.security import get_bearer_token
 BearerTokenDependency = Annotated[str, Depends(get_bearer_token)]
 
 SessionDependency = Annotated[AsyncSession, Depends(get_session)]
-UserServiceDependency = Annotated[UserService, Depends()]
 AuthServiceDependency = Annotated[AuthService, Depends()]
 PasswordServiceDependency = Annotated[PasswordService, Depends()]
 TokenServiceDependency = Annotated[TokenService, Depends()]

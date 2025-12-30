@@ -2,10 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.core.slowapi import limiter
+from slowapi.middleware import SlowAPIMiddleware
 
-# import routers
 from app.routers.auth import router as auth_router
-# from app.routers.users import router as users_router
 
 
 # import exception handlers
@@ -35,6 +34,7 @@ app = FastAPI(lifespan=lifespan)
 app.state.limiter = limiter
 
 
+app.add_middleware(SlowAPIMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -45,7 +45,6 @@ app.add_middleware(
 
 
 app.include_router(auth_router)
-# app.include_router(users_router)
 
 app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
