@@ -73,7 +73,7 @@ async def sessions(
     return await auth_service.get_sessions(user)
 
 
-@router.get("/revoke", response_model=APIResponse[MessageResponse])
+@router.post("/revoke", response_model=APIResponse[MessageResponse])
 async def revoke(
     request: Request,
     session_id: UUID,
