@@ -33,6 +33,7 @@ def response_handler() -> Callable:
                 logger.error("Internal Server Error: {}".format(e))
                 raise HTTPException(status_code=500, detail="Internal Server Error")
 
+            # transform models using their to_response() func.
             result = to_response_handler(result)
 
             if isinstance(result, APIResponse):

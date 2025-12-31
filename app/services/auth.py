@@ -76,7 +76,9 @@ class AuthService(BaseService):
         return AuthResponse(user=user.to_response(), tokens=tokens)
 
     async def refresh(self, request: Request, payload: RefreshRequest) -> AuthResponse:
-        token, session = await self.session_service.validate_refresh_token(payload.refresh_token)
+        token, session = await self.session_service.validate_refresh_token(
+            payload.refresh_token
+        )
         user = await self._find_user_by_id(token.sub)
         tokens = await self.session_service.create_tokens(request, user, session.id)
 

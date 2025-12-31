@@ -109,7 +109,7 @@ class SessionService(BaseService):
         return result.scalar_one_or_none()
 
     async def create_tokens(
-        self, request: Request, user: User, session_id: str = "" 
+        self, request: Request, user: User, session_id: str = ""
     ) -> TokenResponse:
         payload = {"sub": str(user.id), "email": user.email}
 
@@ -211,13 +211,13 @@ class SessionService(BaseService):
             .limit(10)
         )
         return result.scalars().all()
-    
+
     async def _revoke_session(self, user_id: str, session_id: str):
         await self.session.execute(
-                update(Session)
-                .where(Session.id == session_id, Session.user_id == user_id)
-                .values(revoked=True)
-            )
+            update(Session)
+            .where(Session.id == session_id, Session.user_id == user_id)
+            .values(revoked=True)
+        )
         await self.session.commit()
 
     async def revoke_session(self, user_id: str, session_id: str) -> MessageResponse:
