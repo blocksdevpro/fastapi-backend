@@ -20,6 +20,7 @@ PasswordServiceDependency = Annotated[PasswordService, Depends()]
 SessionServiceDependency = Annotated[SessionService, Depends()]
 ProductServiceDependency = Annotated[ProductService, Depends()]
 
+
 async def get_current_user_payload(
     token: BearerTokenDependency,
     session_service: SessionServiceDependency,

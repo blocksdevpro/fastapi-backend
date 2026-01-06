@@ -2,11 +2,13 @@
 from uuid import UUID as PyUUID
 from app.db.session import Base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import UUID, String, Boolean, text, Float, Integer, ForeignKey
+from sqlalchemy import UUID, String, text, Float, Integer, ForeignKey
 from app.models.common import TimestampMixin
 import typing
+
 if typing.TYPE_CHECKING:
     from app.models.user import User
+
 
 class Product(TimestampMixin, Base):
     __tablename__ = "products"

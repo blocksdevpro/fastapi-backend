@@ -1,12 +1,13 @@
+from typing import Optional
 from uuid import UUID
-from app.models.user import User
 from app.models.product import Product
+from app.schemas.product import CreateProductRequest
 from app.services.base import BaseService
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 from app.db.session import AsyncSession, get_session
 
-from sqlalchemy import select, update, delete, Select
+from sqlalchemy import select, Select
 from app.schemas.common import QueryParams
 from sqlalchemy import asc, desc, or_, func
 
@@ -28,14 +29,14 @@ class ProductService(BaseService):
 
         # apply filters
         data_query = self._apply_filters(data_query, params)
-        
+
         # count total products.
         count_query = select(func.count()).select_from(data_query.subquery())
-        
+
         # apply sorting
         data_query = self._apply_sorting(data_query, params)
 
-        # apply pagination  
+        # apply pagination
         data_query = data_query.offset(params.offset).limit(params.limit)
 
         result = await self.session.execute(data_query)
@@ -67,3 +68,21 @@ class ProductService(BaseService):
         order_by = asc(sort_column) if params.sort_order == "asc" else desc(sort_column)
 
         return query.order_by(order_by)
+
+    async def get_products(self, user_id: str | UUID, params: QueryParams):
+        return await self._find_products(user_id, params)
+
+    async def create_product(
+        self, user_id: str | UUID, payload: CreateProductRequest
+    ) -> Optional[Product]:
+        product = Product(
+            user_id=user_id,
+            name=payload.name,
+            description=payload.description,
+            price=payload.price,
+            stock=payload.stock,
+        )
+        self.session.add(product)
+        await self.session.commit()
+        await self.session.refresh(product)
+        return product

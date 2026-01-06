@@ -4,11 +4,9 @@ from contextlib import asynccontextmanager
 from app.core.slowapi import limiter
 from slowapi.middleware import SlowAPIMiddleware
 
-from app.models.user import User
-from app.models.product import Product
 
 from app.routers.auth import router as auth_router
-from  app.routers.products import router as products_router
+from app.routers.products import router as products_router
 
 # import exception handlers
 from app.handlers.exception import (

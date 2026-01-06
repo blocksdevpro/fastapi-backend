@@ -8,7 +8,6 @@ class AutoAPIResponseRouter(APIRouter):
         # Force response_model_exclude_unset for this CustomRouter
         kwargs.setdefault("response_model_exclude_none", True)
 
-
         # apply @response_handler decorater
         endpoint = response_handler()(endpoint)
 

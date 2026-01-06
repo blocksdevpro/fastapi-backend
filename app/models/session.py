@@ -10,7 +10,7 @@ from app.models.common import TimestampMixin
 
 
 if typing.TYPE_CHECKING:
-    from app.models.user import User
+    pass
 
 
 class Session(TimestampMixin, Base):

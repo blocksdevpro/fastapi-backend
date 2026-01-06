@@ -6,8 +6,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import UUID, String, Boolean, text
 from app.models.common import TimestampMixin
 import typing
+
 if typing.TYPE_CHECKING:
     from app.models.product import Product
+
 
 class User(TimestampMixin, Base):
     __tablename__ = "users"

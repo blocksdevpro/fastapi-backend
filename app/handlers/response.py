@@ -40,7 +40,7 @@ def response_handler() -> Callable:
                 return result
 
             if isinstance(result, dict) and (
-                hasattr(result, "metadata") and hasattr(result, "items")
+                "metadata" in result and "items" in result
             ):
                 return APIResponse(
                     success=True,
