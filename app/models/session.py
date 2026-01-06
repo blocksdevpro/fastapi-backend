@@ -1,11 +1,16 @@
 # app/models/session.py
 
+import typing
 from uuid import UUID as PyUUID
 from datetime import datetime
 from app.db.session import Base
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import UUID, Boolean, DateTime, ForeignKey, String, text
 from app.models.common import TimestampMixin
+
+
+if typing.TYPE_CHECKING:
+    from app.models.user import User
 
 
 class Session(TimestampMixin, Base):

@@ -7,6 +7,7 @@ from app.models.user import User
 from app.services.auth import AuthService
 from app.services.password import PasswordService
 from app.services.session import Token, SessionService
+from app.services.product import ProductService
 
 from app.core.security import get_bearer_token
 
@@ -17,7 +18,7 @@ SessionDependency = Annotated[AsyncSession, Depends(get_session)]
 AuthServiceDependency = Annotated[AuthService, Depends()]
 PasswordServiceDependency = Annotated[PasswordService, Depends()]
 SessionServiceDependency = Annotated[SessionService, Depends()]
-
+ProductServiceDependency = Annotated[ProductService, Depends()]
 
 async def get_current_user_payload(
     token: BearerTokenDependency,
