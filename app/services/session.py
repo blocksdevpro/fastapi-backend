@@ -13,6 +13,7 @@ from app.services.base import BaseService
 from app.services.token import Token, JwtService
 from app.db.session import AsyncSession, get_session
 from app.schemas.auth import TokenResponse, MessageResponse
+from typing import Sequence
 
 
 class SessionService(BaseService):
@@ -98,7 +99,7 @@ class SessionService(BaseService):
         return result.scalar_one_or_none()
 
     async def _find_user_session(
-        self, user_id: str, session_id: str
+        self, user_id: str | UUID, session_id: str | UUID
     ) -> Optional[Session]:
         result = await self.session.execute(
             select(Session).where(
@@ -127,7 +128,9 @@ class SessionService(BaseService):
             token_type="bearer",
         )
 
-    async def cleanup_device_sessions(self, user_id: str, device_id: str) -> None:
+    async def cleanup_device_sessions(
+        self, user_id: str | UUID, device_id: str
+    ) -> None:
         await self.session.execute(
             delete(Session).where(
                 Session.user_id == user_id,
@@ -135,7 +138,7 @@ class SessionService(BaseService):
             )
         )
 
-    async def cleanup_max_device_sessions(self, user_id: str) -> None:
+    async def cleanup_max_device_sessions(self, user_id: str | UUID) -> None:
         subquery = (
             select(Session.id)
             .where(Session.user_id == user_id)
@@ -147,7 +150,7 @@ class SessionService(BaseService):
             update(Session).where(Session.id.in_(subquery)).values(revoked=True)
         )
 
-    async def cleanup_expired_sessions(self, user_id: str) -> None:
+    async def cleanup_expired_sessions(self, user_id: str | UUID) -> None:
         current_time = datetime.now(timezone.utc)
         await self.session.execute(
             update(Session)
@@ -159,7 +162,9 @@ class SessionService(BaseService):
         )
         await self.session.commit()
 
-    async def _create_session(self, request: Request, token: str, user_id: str) -> None:
+    async def _create_session(
+        self, request: Request, token: str, user_id: str | UUID
+    ) -> None:
         try:
             token_payload = self.refresh_token_service.decode_token(token)
             token_hash = self._hash_token(token_payload, token)
@@ -177,7 +182,7 @@ class SessionService(BaseService):
                 token_hash=token_hash,
                 ip_address=ip_address,
                 user_agent=user_agent,
-                expires_at=datetime.fromtimestamp(token_payload.exp, timezone.utc),
+                expires_at=datetime.fromtimestamp(token_payload.exp, timezone.utc),  # type: ignore
             )
 
             self.session.add(session)
@@ -205,7 +210,7 @@ class SessionService(BaseService):
         await self.session.commit()
         return MessageResponse(message="Successfully logged out of the session!")
 
-    async def find_active_sessions(self, user_id: UUID) -> list[Session]:
+    async def find_active_sessions(self, user_id: UUID) -> Sequence[Session]:
         result = await self.session.execute(
             select(Session)
             .where(Session.user_id == user_id, not_(Session.revoked))
@@ -213,7 +218,7 @@ class SessionService(BaseService):
         )
         return result.scalars().all()
 
-    async def _revoke_session(self, user_id: UUID, session_id: UUID):
+    async def _revoke_session(self, user_id: str | UUID, session_id: str | UUID):
         await self.session.execute(
             update(Session)
             .where(Session.id == session_id, Session.user_id == user_id)
@@ -224,10 +229,5 @@ class SessionService(BaseService):
     async def revoke_session(self, user_id: UUID, session_id: UUID) -> MessageResponse:
         session = await self._find_user_session(user_id, session_id)
         if session:
-            await self.session.execute(
-                update(Session)
-                .where(Session.user_id == user_id, Session.id == session_id)
-                .values(revoked=True)
-            )
-            await self.session.commit()
+            await self._revoke_session(user_id, session_id)
         return MessageResponse(message="Successfully revoked the session!")

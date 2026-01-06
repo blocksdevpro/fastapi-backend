@@ -2,7 +2,7 @@ from uuid import UUID
 from sqlalchemy.exc import IntegrityError
 from app.models.session import Session
 from app.services.base import BaseService
-from typing import Annotated, Optional
+from typing import Annotated, Optional, Sequence
 from fastapi import Depends, HTTPException, Request, status
 from app.db.session import AsyncSession, get_session
 from sqlalchemy import select
@@ -109,7 +109,7 @@ class AuthService(BaseService):
             )
         return user
 
-    async def get_sessions(self, user: User) -> list[Session]:
+    async def get_sessions(self, user: User) -> Sequence[Session]:
         return await self.session_service.find_active_sessions(user.id)
 
     async def revoke(self, user: User, session_id: UUID) -> MessageResponse:
