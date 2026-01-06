@@ -53,9 +53,9 @@ app.add_middleware(
 
 app.include_router(auth_router)
 
-app.add_exception_handler(HTTPException, http_exception_handler)
-app.add_exception_handler(RequestValidationError, validation_exception_handler)
-app.add_exception_handler(RateLimitExceeded, rate_limit_exception_handler)
+app.add_exception_handler(HTTPException, http_exception_handler)  # type: ignore
+app.add_exception_handler(RequestValidationError, validation_exception_handler)  # type: ignore
+app.add_exception_handler(RateLimitExceeded, rate_limit_exception_handler)  # type: ignore
 
 
 @app.get("/health")

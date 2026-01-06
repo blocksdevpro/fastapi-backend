@@ -1,5 +1,6 @@
 import re
 import hashlib
+from uuid import UUID
 from datetime import datetime, timezone
 from typing import Annotated, Optional
 from sqlalchemy import not_, select, update, delete
@@ -78,7 +79,7 @@ class SessionService(BaseService):
     async def validate_access_token(self, token: str) -> Token:
         return self.access_token_service.decode_token(token)
 
-    async def validate_refresh_token(self, token: str) -> [Token, Session]:
+    async def validate_refresh_token(self, token: str) -> tuple[Token, Session]:
         token_payload = self.refresh_token_service.decode_token(token)
         token_hash = self._hash_token(token_payload, token)
         session = await self._find_session(token_hash)
@@ -109,7 +110,7 @@ class SessionService(BaseService):
         return result.scalar_one_or_none()
 
     async def create_tokens(
-        self, request: Request, user: User, session_id: str = ""
+        self, request: Request, user: User, session_id: Optional[str | UUID] = None
     ) -> TokenResponse:
         payload = {"sub": str(user.id), "email": user.email}
 
@@ -204,7 +205,7 @@ class SessionService(BaseService):
         await self.session.commit()
         return MessageResponse(message="Successfully logged out of the session!")
 
-    async def find_active_sessions(self, user_id: str) -> list[Session]:
+    async def find_active_sessions(self, user_id: UUID) -> list[Session]:
         result = await self.session.execute(
             select(Session)
             .where(Session.user_id == user_id, not_(Session.revoked))
@@ -212,7 +213,7 @@ class SessionService(BaseService):
         )
         return result.scalars().all()
 
-    async def _revoke_session(self, user_id: str, session_id: str):
+    async def _revoke_session(self, user_id: UUID, session_id: UUID):
         await self.session.execute(
             update(Session)
             .where(Session.id == session_id, Session.user_id == user_id)
@@ -220,7 +221,7 @@ class SessionService(BaseService):
         )
         await self.session.commit()
 
-    async def revoke_session(self, user_id: str, session_id: str) -> MessageResponse:
+    async def revoke_session(self, user_id: UUID, session_id: UUID) -> MessageResponse:
         session = await self._find_user_session(user_id, session_id)
         if session:
             await self.session.execute(

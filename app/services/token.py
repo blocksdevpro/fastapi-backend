@@ -6,7 +6,12 @@ from fastapi import HTTPException, status
 
 class Token:
     def __init__(
-        self, sub: str, email: str, token_type: str, iat: datetime, exp: datetime
+        self,
+        sub: str,
+        email: str,
+        token_type: str,
+        iat: datetime | float,
+        exp: datetime | float,
     ):
         self.sub = sub
         self.email = email

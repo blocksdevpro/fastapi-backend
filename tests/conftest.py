@@ -60,7 +60,7 @@ async def setup_test_database():
 
 # Override get_session dependency
 async def override_get_session() -> AsyncGenerator[AsyncSession]:
-    async with async_session() as session:
+    async with async_session() as session:  # type: ignore
         try:
             yield session
         except Exception:

@@ -1,3 +1,4 @@
+from uuid import UUID
 from sqlalchemy.exc import IntegrityError
 from app.models.session import Session
 from app.services.base import BaseService
@@ -14,6 +15,8 @@ from app.schemas.auth import (
     LoginRequest,
     AuthResponse,
 )
+from app.schemas.user import UpdateUserRequest
+
 from app.services.session import Token, SessionService
 
 
@@ -42,6 +45,12 @@ class AuthService(BaseService):
 
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
+
+    async def _get_user_by_id(self, user_id: str) -> User:
+        user = await self._find_user_by_id(user_id)
+        if not user:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
+        return user
 
     async def _create_user(self, name: str, email: str, password: str):
         user = User(name=name, email=email, hashed_password=password)
@@ -79,7 +88,7 @@ class AuthService(BaseService):
         token, session = await self.session_service.validate_refresh_token(
             payload.refresh_token
         )
-        user = await self._find_user_by_id(token.sub)
+        user = await self._get_user_by_id(token.sub)
         tokens = await self.session_service.create_tokens(request, user, session.id)
 
         return AuthResponse(
@@ -103,7 +112,12 @@ class AuthService(BaseService):
     async def get_sessions(self, user: User) -> list[Session]:
         return await self.session_service.find_active_sessions(user.id)
 
-    async def revoke(self, user: User, session_id: str) -> MessageResponse:
-        result = await self.session_service.revoke_session(user.id, session_id)
-        print("result:", result)
-        return result
+    async def revoke(self, user: User, session_id: UUID) -> MessageResponse:
+        return await self.session_service.revoke_session(user.id, session_id)
+
+    async def update(self, user: User, payload: UpdateUserRequest) -> User:
+        user.name = payload.name
+
+        await self.session.commit()
+        await self.session.refresh(user)
+        return user

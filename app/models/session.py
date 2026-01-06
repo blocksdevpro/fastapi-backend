@@ -1,5 +1,6 @@
 # app/models/session.py
 
+from uuid import UUID as PyUUID
 from datetime import datetime
 from app.db.session import Base
 from sqlalchemy.orm import Mapped, mapped_column
@@ -10,10 +11,10 @@ from app.models.common import TimestampMixin
 class Session(TimestampMixin, Base):
     __tablename__ = "sessions"
 
-    id: Mapped[UUID] = mapped_column(
+    id: Mapped[PyUUID] = mapped_column(
         UUID, server_default=text("gen_random_uuid()"), primary_key=True
     )
-    user_id: Mapped[UUID] = mapped_column(
+    user_id: Mapped[PyUUID] = mapped_column(
         UUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
     device_id: Mapped[str] = mapped_column(String(255), index=True)

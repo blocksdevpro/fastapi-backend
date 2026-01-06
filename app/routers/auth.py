@@ -1,7 +1,7 @@
 # app/routers/auth.py
 
 from uuid import UUID
-from fastapi import Request
+from fastapi import Request, Path
 
 from app.dependencies import (
     AuthServiceDependency,
@@ -18,7 +18,7 @@ from app.schemas.auth import (
 )
 
 from app.schemas.response import APIResponse
-from app.schemas.user import UserResponse
+from app.schemas.user import UserResponse, UpdateUserRequest
 from app.utils.router import AutoAPIResponseRouter
 
 router = AutoAPIResponseRouter(prefix="/auth", tags=["auth"])
@@ -76,8 +76,18 @@ async def sessions(
 @router.post("/revoke", response_model=APIResponse[MessageResponse])
 async def revoke(
     request: Request,
-    session_id: UUID,
     user: CurrentUserDependency,
     auth_service: AuthServiceDependency,
+    session_id: UUID = Path(..., description="Session ID to revoke"),
 ):
     return await auth_service.revoke(user, session_id)
+
+
+@router.put("/update", response_model=APIResponse[UserResponse])
+async def update(
+    request: Request,
+    user: CurrentUserDependency,
+    auth_service: AuthServiceDependency,
+    payload: UpdateUserRequest,
+):
+    return await auth_service.update(user, payload)

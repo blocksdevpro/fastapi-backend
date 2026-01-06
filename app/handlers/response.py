@@ -10,13 +10,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def to_response_handler(model: Any) -> Union[Any, list[Any], dict[str, Any]]:
+def transform_model_to_response(model: Any) -> Union[Any, list[Any], dict[str, Any]]:
     if hasattr(model, "to_response") and callable(model.to_response):
         return model.to_response()
     elif isinstance(model, list):
-        return [to_response_handler(item) for item in model]
+        return [transform_model_to_response(item) for item in model]
     elif isinstance(model, dict) and hasattr(model, "items"):
-        model["items"] = [to_response_handler(item) for item in model["items"]]
+        model["items"] = [transform_model_to_response(item) for item in model["items"]]
 
     return model
 
@@ -34,7 +34,7 @@ def response_handler() -> Callable:
                 raise HTTPException(status_code=500, detail="Internal Server Error")
 
             # transform models using their to_response() func.
-            result = to_response_handler(result)
+            result = transform_model_to_response(result)
 
             if isinstance(result, APIResponse):
                 return result

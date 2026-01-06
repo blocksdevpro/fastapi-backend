@@ -11,6 +11,10 @@ class UserCreate(BaseModel):
     password: str
 
 
+class UpdateUserRequest(BaseModel):
+    name: str
+
+
 class UserResponse(BaseModel):
     id: str | UUID
     name: str

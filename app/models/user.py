@@ -1,21 +1,23 @@
 # app/models/user.py
 
+from uuid import UUID as PyUUID
 from app.db.session import Base
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import UUID, String, text
+from sqlalchemy import UUID, String, Boolean, text
 from app.models.common import TimestampMixin
 
 
 class User(TimestampMixin, Base):
     __tablename__ = "users"
 
-    id: Mapped[UUID] = mapped_column(
+    id: Mapped[PyUUID] = mapped_column(
         UUID, server_default=text("gen_random_uuid()"), primary_key=True
     )
     name: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     email: Mapped[str] = mapped_column(
         String(255), nullable=False, unique=True, index=True
     )
+    email_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
 
     def __repr__(self):
