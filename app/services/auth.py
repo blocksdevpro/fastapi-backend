@@ -1,3 +1,4 @@
+import logging
 from uuid import UUID
 from sqlalchemy.exc import IntegrityError
 from app.models.session import Session
@@ -31,16 +32,17 @@ class AuthService(BaseService):
         self.password_service = password_service
         self.session_service = session_service
         super().__init__()
+        
 
     async def _find_user(self, email: str) -> Optional[User]:
-        self.logger.info("Finding user with email: {}".format(email))
+        self.logger.info(f"Finding user with {email=}")
         query = select(User).where(User.email == email)
 
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
     async def _find_user_by_id(self, user_id: str) -> Optional[User]:
-        self.logger.info("Finding user with user_id: {}".format(user_id))
+        self.logger.info(f"Finding user with {user_id=}")
         query = select(User).where(User.id == user_id)
 
         result = await self.session.execute(query)

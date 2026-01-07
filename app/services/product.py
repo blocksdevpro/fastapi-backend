@@ -82,6 +82,8 @@ class ProductService(BaseService):
             price=payload.price,
             stock=payload.stock,
         )
+        self.logger.info(f"Creating {product}")
+        
         self.session.add(product)
         await self.session.commit()
         await self.session.refresh(product)
