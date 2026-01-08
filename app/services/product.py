@@ -1,3 +1,5 @@
+from app.schemas.product import UpdateProductRequest
+from typing import Literal
 from uuid import UUID
 from typing import Optional
 from fastapi.exceptions import HTTPException
@@ -8,7 +10,7 @@ from app.services.base import BaseService
 from fastapi import Depends, status
 from app.db.session import AsyncSession, get_session
 
-from sqlalchemy import select, Select
+from sqlalchemy import select, Select, delete
 from app.schemas.common import QueryParams
 from sqlalchemy import asc, desc, or_, func
 
@@ -43,13 +45,19 @@ class ProductService(BaseService):
         result = await self.session.execute(data_query)
         count_result = await self.session.execute(count_query)
 
+        items = result.scalars().all()
+        count = count_result.scalar()
+        self.logger.info(
+            f"Found {count} products for user {user_id=} returned {len(items)} products."
+        )
+
         return {
-            "items": result.scalars().all(),
+            "items": items,
             "metadata": {
                 "pagination": {
                     "page": params.page,
                     "limit": params.limit,
-                    "total": count_result.scalar(),
+                    "total": count,
                 }
             },
         }
@@ -81,7 +89,7 @@ class ProductService(BaseService):
         products = await self._find_products(user_id, params)
         if not products:
             self.logger.warning(f"Products not found {user_id=}.")
-        return
+        return products
 
     async def create_product(
         self, user_id: UUID, payload: CreateProductRequest
@@ -99,3 +107,36 @@ class ProductService(BaseService):
         await self.session.commit()
         await self.session.refresh(product)
         return product
+
+    async def update_product(
+        self, user_id: UUID, product_id: UUID, payload: UpdateProductRequest
+    ):
+        product = await self._find_product(user_id, product_id)
+        if not product:
+            self.logger.warning(f"Product not found {user_id=} {product_id=}.")
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Product not found.")
+
+        product.name = payload.name or product.name
+        product.description = payload.description or product.description
+        product.price = payload.price or product.price
+        product.stock = payload.stock or product.stock
+
+        self.logger.info(f"Updating {product}")
+
+        await self.session.commit()
+        await self.session.refresh(product)
+        return product
+
+    async def delete_products(
+        self, user_id: UUID, product_ids: list[UUID] | Literal["all"]
+    ):
+        result = await self.session.execute(
+            delete(Product).where(
+                Product.user_id == user_id, Product.id.in_(product_ids)
+            )
+        )
+        await self.session.commit()
+
+        if result.rowcount == 0:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Products not found.")
+        return result.rowcount
