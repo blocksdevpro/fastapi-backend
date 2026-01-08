@@ -1,3 +1,4 @@
+from uuid import UUID
 from fastapi import Depends, Request
 from app.schemas.product import CreateProductRequest
 from app.utils.router import AutoAPIResponseRouter
@@ -12,6 +13,16 @@ router = AutoAPIResponseRouter(
 )
 
 
+@router.post("", response_model=APIResponse[ProductResponse])
+async def create_products(
+    request: Request,
+    user: CurrentUserDependency,
+    service: ProductServiceDependency,
+    payload: CreateProductRequest,
+):
+    return await service.create_product(user.id, payload)
+
+
 @router.get("", response_model=APIResponse[list[ProductResponse]])
 async def get_products(
     request: Request,
@@ -22,11 +33,11 @@ async def get_products(
     return await service.get_products(user.id, params)
 
 
-@router.post("", response_model=APIResponse[ProductResponse])
-async def create_products(
+@router.get("/{product_id}", response_model=APIResponse[ProductResponse])
+async def get_product(
     request: Request,
     user: CurrentUserDependency,
     service: ProductServiceDependency,
-    payload: CreateProductRequest,
+    product_id: UUID,
 ):
-    return await service.create_product(user.id, payload)
+    return await service.get_product(user.id, product_id)

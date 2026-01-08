@@ -5,9 +5,9 @@ from app.db.session import Base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import UUID, String, Boolean, text
 from app.models.common import TimestampMixin
-import typing
+from typing import TYPE_CHECKING
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from app.models.product import Product
 
 

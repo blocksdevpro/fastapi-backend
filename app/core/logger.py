@@ -18,11 +18,31 @@ class RequestIDFilter(logging.Filter):
 
 class JsonFormatter(logging.Formatter):
     """Formats log records as JSON with standard fields."""
+
     RESERVED_ATTRS = {
-        'name', 'msg', 'args', 'created', 'filename', 'funcName', 'levelname',
-        'levelno', 'lineno', 'module', 'msecs', 'message', 'pathname', 'process',
-        'processName', 'relativeCreated', 'thread', 'threadName', 'taskName', 'exc_info',
-        'exc_text', 'stack_info', 'request_id'
+        "name",
+        "msg",
+        "args",
+        "created",
+        "filename",
+        "funcName",
+        "levelname",
+        "levelno",
+        "lineno",
+        "module",
+        "msecs",
+        "message",
+        "pathname",
+        "process",
+        "processName",
+        "relativeCreated",
+        "thread",
+        "threadName",
+        "taskName",
+        "exc_info",
+        "exc_text",
+        "stack_info",
+        "request_id",
     }
 
     def format(self, record: logging.LogRecord) -> str:
@@ -32,13 +52,12 @@ class JsonFormatter(logging.Formatter):
             "timestamp": self.formatTime(record, self.datefmt),
             "request_id": getattr(record, "request_id", "-"),
             "message": record.getMessage(),
-            
         }
         if record.exc_info:
             log_data["exception"] = self.formatException(record.exc_info)
         for key, value in record.__dict__.items():
             if key not in self.RESERVED_ATTRS:
-                log_data[key] = value    
+                log_data[key] = value
 
         return json.dumps(log_data, default=str)
 

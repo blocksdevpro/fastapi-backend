@@ -6,6 +6,7 @@ from app.core.slowapi import limiter
 from slowapi.middleware import SlowAPIMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from app.handlers.middlewares import RequestIDMiddleware, RequestDurationMiddleware
+
 # import routers
 from app.routers.auth import router as auth_router
 from app.routers.products import router as products_router
@@ -57,8 +58,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(SlowAPIMiddleware)
-app.add_middleware(RequestIDMiddleware)
 app.add_middleware(RequestDurationMiddleware)
+app.add_middleware(RequestIDMiddleware)
 
 app.include_router(auth_router)
 app.include_router(products_router)

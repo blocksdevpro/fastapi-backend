@@ -1,4 +1,3 @@
-import logging
 from uuid import UUID
 from sqlalchemy.exc import IntegrityError
 from app.models.session import Session
@@ -32,7 +31,6 @@ class AuthService(BaseService):
         self.password_service = password_service
         self.session_service = session_service
         super().__init__()
-        
 
     async def _find_user(self, email: str) -> Optional[User]:
         self.logger.info(f"Finding user with {email=}")
@@ -78,7 +76,9 @@ class AuthService(BaseService):
     async def login(self, request: Request, payload: LoginRequest) -> AuthResponse:
         user = await self._find_user(payload.email)
         if not user or not await self.password_service.verify_password(
-            payload.password, user.hashed_password
+            # pyrefly: ignore [bad-argument-type]
+            payload.password,
+            user.hashed_password,
         ):
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid credentials")
 
@@ -91,6 +91,7 @@ class AuthService(BaseService):
             payload.refresh_token
         )
         user = await self._get_user_by_id(token.sub)
+        # pyrefly: ignore [bad-argument-type]
         tokens = await self.session_service.create_tokens(request, user, session.id)
 
         return AuthResponse(
@@ -112,9 +113,11 @@ class AuthService(BaseService):
         return user
 
     async def get_sessions(self, user: User) -> Sequence[Session]:
+        # pyrefly: ignore [bad-argument-type]
         return await self.session_service.find_active_sessions(user.id)
 
     async def revoke(self, user: User, session_id: UUID) -> MessageResponse:
+        # pyrefly: ignore [bad-argument-type]
         return await self.session_service.revoke_session(user.id, session_id)
 
     async def update(self, user: User, payload: UpdateUserRequest) -> User:
