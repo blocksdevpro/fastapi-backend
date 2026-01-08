@@ -15,7 +15,7 @@ def transform_model_to_response(model: Any) -> Union[Any, list[Any], dict[str, A
         return model.to_response()
     elif isinstance(model, list):
         return [transform_model_to_response(item) for item in model]
-    elif isinstance(model, dict) and hasattr(model, "items"):
+    elif isinstance(model, dict) and "items" in model:
         model["items"] = [transform_model_to_response(item) for item in model["items"]]
 
     return model
