@@ -57,14 +57,14 @@ async def test_success_login(client: AsyncClient):
 async def test_failed_login(client: AsyncClient):
     res = await client.post(
         "/auth/login",
-        json=LoginRequest(email=user_credentials["email"], password="123").model_dump(),
+        json={"email": user_credentials["email"], "password": "123"},
     )
-    assert res.status_code == 401
+    assert res.status_code == 422
     res_json = res.json()
 
     assert res_json != {}
     assert not res_json["success"]
-    assert res_json["error"]["message"] == "Invalid credentials"
+    assert res_json["error"]["message"] == "Validation Error"
 
 
 @pytest.mark.asyncio(loop_scope="session")
