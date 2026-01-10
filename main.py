@@ -41,8 +41,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Calorine API",
-    description="Calorie tracking backend",
+    title="FastAPI Backend",
+    description="FastAPI Backend",
     version="1.0.0",
     docs_url="/api/docs",
     redoc_url="/api/redoc",

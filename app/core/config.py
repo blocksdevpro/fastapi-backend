@@ -5,7 +5,6 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     TEST_DATABASE_URL: str
 
-    BCRYPT_ROUNDS: int
     JWT_ALGORITHM: str
 
     JWT_ACCESS_SECRET_KEY: str
