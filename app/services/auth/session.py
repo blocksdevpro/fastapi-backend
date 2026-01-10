@@ -10,7 +10,7 @@ from app.models.user import User
 from app.models.session import Session
 from app.core.config import settings
 from app.services.base import BaseService
-from app.services.token import Token, JwtService
+from app.services.auth.jwt import Token, JwtService
 from app.db.session import AsyncSession, get_session
 from app.schemas.auth import TokenResponse, MessageResponse
 from typing import Sequence

@@ -7,7 +7,7 @@ from fastapi import Depends, HTTPException, Request, status
 from app.db.session import AsyncSession, get_session
 from sqlalchemy import select
 from app.models.user import User
-from app.services.password import PasswordService
+from app.services.auth.password import PasswordService
 from app.schemas.auth import (
     MessageResponse,
     RefreshRequest,
@@ -17,7 +17,7 @@ from app.schemas.auth import (
 )
 from app.schemas.user import UpdateUserRequest
 
-from app.services.session import Token, SessionService
+from app.services.auth.session import Token, SessionService
 
 
 class AuthService(BaseService):

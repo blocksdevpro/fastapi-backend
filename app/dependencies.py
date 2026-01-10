@@ -4,9 +4,9 @@ from typing import Annotated
 from fastapi import Depends
 from app.db.session import get_session, AsyncSession
 from app.models.user import User
-from app.services.auth import AuthService
-from app.services.password import PasswordService
-from app.services.session import Token, SessionService
+from app.services.auth.auth import AuthService
+from app.services.auth.password import PasswordService
+from app.services.auth.session import Token, SessionService
 from app.services.product import ProductService
 
 from app.core.security import get_bearer_token
