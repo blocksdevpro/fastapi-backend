@@ -10,7 +10,7 @@ from app.models.user import User
 from app.models.session import Session
 from app.core.config import settings
 from app.services.base import BaseService
-from app.services.token import Token, JwtService
+from app.services.auth.jwt import Token, JwtService
 from app.db.session import AsyncSession, get_session
 from app.schemas.auth import TokenResponse, MessageResponse
 from typing import Sequence
@@ -99,7 +99,7 @@ class SessionService(BaseService):
         return result.scalar_one_or_none()
 
     async def _find_user_session(
-        self, user_id: str | UUID, session_id: str | UUID
+        self, user_id: UUID, session_id: UUID
     ) -> Optional[Session]:
         result = await self.session.execute(
             select(Session).where(
@@ -111,15 +111,17 @@ class SessionService(BaseService):
         return result.scalar_one_or_none()
 
     async def create_tokens(
-        self, request: Request, user: User, session_id: Optional[str | UUID] = None
+        self, request: Request, user: User, session_id: Optional[UUID] = None
     ) -> TokenResponse:
         payload = {"sub": str(user.id), "email": user.email}
 
         access_token = await self._create_access_token(payload)
         refresh_token = await self._create_refresh_token(payload)
 
+        # pyrefly: ignore [bad-argument-type]
         await self._create_session(request, refresh_token, user.id)
         if session_id:
+            # pyrefly: ignore [bad-argument-type]
             await self._revoke_session(user.id, session_id)
 
         return TokenResponse(
@@ -128,9 +130,7 @@ class SessionService(BaseService):
             token_type="bearer",
         )
 
-    async def cleanup_device_sessions(
-        self, user_id: str | UUID, device_id: str
-    ) -> None:
+    async def cleanup_device_sessions(self, user_id: UUID, device_id: str) -> None:
         await self.session.execute(
             delete(Session).where(
                 Session.user_id == user_id,
@@ -138,7 +138,7 @@ class SessionService(BaseService):
             )
         )
 
-    async def cleanup_max_device_sessions(self, user_id: str | UUID) -> None:
+    async def cleanup_max_device_sessions(self, user_id: UUID) -> None:
         subquery = (
             select(Session.id)
             .where(Session.user_id == user_id)
@@ -150,7 +150,7 @@ class SessionService(BaseService):
             update(Session).where(Session.id.in_(subquery)).values(revoked=True)
         )
 
-    async def cleanup_expired_sessions(self, user_id: str | UUID) -> None:
+    async def cleanup_expired_sessions(self, user_id: UUID) -> None:
         current_time = datetime.now(timezone.utc)
         await self.session.execute(
             update(Session)
@@ -163,7 +163,7 @@ class SessionService(BaseService):
         await self.session.commit()
 
     async def _create_session(
-        self, request: Request, token: str, user_id: str | UUID
+        self, request: Request, token: str, user_id: UUID
     ) -> None:
         try:
             token_payload = self.refresh_token_service.decode_token(token)
@@ -171,6 +171,8 @@ class SessionService(BaseService):
             device_id = self._generate_device_id(request)
             ip_address = self._extract_ip_address(request)
             user_agent = request.headers.get("User-Agent", "Unknown")[:500]  # Truncate
+
+            self.logger.info(f"User logged_in with {device_id=}")
 
             await self.cleanup_expired_sessions(user_id)
             await self.cleanup_device_sessions(user_id, device_id)
@@ -188,9 +190,7 @@ class SessionService(BaseService):
             self.session.add(session)
             await self.session.commit()
         except Exception:
-            self.logger.error(
-                f"Error while saving session with token_hash={token_hash}"
-            )
+            self.logger.error(f"Error while saving session with {user_id=}")
             await self.session.rollback()
             raise
 
@@ -218,7 +218,7 @@ class SessionService(BaseService):
         )
         return result.scalars().all()
 
-    async def _revoke_session(self, user_id: str | UUID, session_id: str | UUID):
+    async def _revoke_session(self, user_id: UUID, session_id: UUID):
         await self.session.execute(
             update(Session)
             .where(Session.id == session_id, Session.user_id == user_id)

@@ -21,7 +21,7 @@ from app.schemas.response import APIResponse
 from app.schemas.user import UserResponse, UpdateUserRequest
 from app.utils.router import AutoAPIResponseRouter
 
-router = AutoAPIResponseRouter(prefix="/auth", tags=["auth"])
+router = AutoAPIResponseRouter(prefix="/auth", tags=["Auth"])
 
 
 @router.post("/signup", response_model=APIResponse[AuthResponse])

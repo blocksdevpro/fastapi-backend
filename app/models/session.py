@@ -6,6 +6,10 @@ from app.db.session import Base
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import UUID, Boolean, DateTime, ForeignKey, String, text
 from app.models.common import TimestampMixin
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    pass
 
 
 class Session(TimestampMixin, Base):

@@ -1,11 +1,15 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.core.slowapi import limiter
+
+# import middlewares
 from slowapi.middleware import SlowAPIMiddleware
+from fastapi.middleware.cors import CORSMiddleware
+from app.handlers.middlewares import RequestIDMiddleware, RequestDurationMiddleware
 
+# import routers
 from app.routers.auth import router as auth_router
-
+from app.routers.products import router as products_router
 
 # import exception handlers
 from app.handlers.exception import (
@@ -13,8 +17,14 @@ from app.handlers.exception import (
     validation_exception_handler,
     rate_limit_exception_handler,
 )
-from fastapi.exceptions import HTTPException, RequestValidationError
 from slowapi.errors import RateLimitExceeded
+from fastapi.exceptions import HTTPException, RequestValidationError
+
+# import and call configure_logging.
+
+from app.core.logger import configure_logging
+
+configure_logging()
 
 
 @asynccontextmanager
@@ -40,8 +50,6 @@ app = FastAPI(
 )
 app.state.limiter = limiter
 
-
-app.add_middleware(SlowAPIMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -49,9 +57,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+app.add_middleware(SlowAPIMiddleware)
+app.add_middleware(RequestDurationMiddleware)
+app.add_middleware(RequestIDMiddleware)
 
 app.include_router(auth_router)
+app.include_router(products_router)
 
 app.add_exception_handler(HTTPException, http_exception_handler)  # type: ignore
 app.add_exception_handler(RequestValidationError, validation_exception_handler)  # type: ignore

@@ -2,9 +2,13 @@
 
 from uuid import UUID as PyUUID
 from app.db.session import Base
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import UUID, String, Boolean, text
 from app.models.common import TimestampMixin
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.product import Product
 
 
 class User(TimestampMixin, Base):
@@ -19,6 +23,8 @@ class User(TimestampMixin, Base):
     )
     email_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    products: Mapped[list["Product"]] = relationship("Product", back_populates="user")
 
     def __repr__(self):
         return f"User(id={self.id}, name={self.name}, email={self.email})"

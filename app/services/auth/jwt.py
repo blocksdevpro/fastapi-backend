@@ -63,11 +63,11 @@ class JwtService(BaseService):
                 )
 
             return Token(
-                sub=payload.get("sub"),
-                email=payload.get("email"),
-                token_type=payload.get("type"),
-                iat=payload.get("iat"),
-                exp=payload.get("exp"),
+                sub=payload.get("sub", ""),
+                email=payload.get("email", ""),
+                token_type=payload.get("type", ""),
+                iat=payload.get("iat", 0.0),
+                exp=payload.get("exp", 0.0),
             )
         except JWTError:
             raise HTTPException(

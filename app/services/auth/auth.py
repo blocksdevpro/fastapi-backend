@@ -7,7 +7,7 @@ from fastapi import Depends, HTTPException, Request, status
 from app.db.session import AsyncSession, get_session
 from sqlalchemy import select
 from app.models.user import User
-from app.services.password import PasswordService
+from app.services.auth.password import PasswordService
 from app.schemas.auth import (
     MessageResponse,
     RefreshRequest,
@@ -17,7 +17,7 @@ from app.schemas.auth import (
 )
 from app.schemas.user import UpdateUserRequest
 
-from app.services.session import Token, SessionService
+from app.services.auth.session import Token, SessionService
 
 
 class AuthService(BaseService):
@@ -33,14 +33,14 @@ class AuthService(BaseService):
         super().__init__()
 
     async def _find_user(self, email: str) -> Optional[User]:
-        self.logger.info("Finding user with email: {}".format(email))
+        self.logger.info(f"Finding user with {email=}")
         query = select(User).where(User.email == email)
 
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
     async def _find_user_by_id(self, user_id: str) -> Optional[User]:
-        self.logger.info("Finding user with user_id: {}".format(user_id))
+        self.logger.info(f"Finding user with {user_id=}")
         query = select(User).where(User.id == user_id)
 
         result = await self.session.execute(query)
@@ -76,7 +76,9 @@ class AuthService(BaseService):
     async def login(self, request: Request, payload: LoginRequest) -> AuthResponse:
         user = await self._find_user(payload.email)
         if not user or not await self.password_service.verify_password(
-            payload.password, user.hashed_password
+            # pyrefly: ignore [bad-argument-type]
+            payload.password,
+            user.hashed_password,
         ):
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid credentials")
 
@@ -89,6 +91,7 @@ class AuthService(BaseService):
             payload.refresh_token
         )
         user = await self._get_user_by_id(token.sub)
+        # pyrefly: ignore [bad-argument-type]
         tokens = await self.session_service.create_tokens(request, user, session.id)
 
         return AuthResponse(
@@ -110,9 +113,11 @@ class AuthService(BaseService):
         return user
 
     async def get_sessions(self, user: User) -> Sequence[Session]:
+        # pyrefly: ignore [bad-argument-type]
         return await self.session_service.find_active_sessions(user.id)
 
     async def revoke(self, user: User, session_id: UUID) -> MessageResponse:
+        # pyrefly: ignore [bad-argument-type]
         return await self.session_service.revoke_session(user.id, session_id)
 
     async def update(self, user: User, payload: UpdateUserRequest) -> User:
