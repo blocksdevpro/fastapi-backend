@@ -64,6 +64,58 @@ class RefreshRequest(BaseModel):
     ]
 
 
+class ForgetPasswordRequest(BaseModel):
+    email: Annotated[EmailStr, Field(..., examples=["john.doe@example.com"])]
+
+
+class ChangePasswordRequest(BaseModel):
+    old_password: Annotated[
+        str, Field(..., min_length=8, max_length=24, examples=["Pass123!"])
+    ]
+    new_password: Annotated[
+        str, Field(..., min_length=8, max_length=24, examples=["Pass123!"])
+    ]
+
+    @field_validator("old_password", "new_password")
+    @classmethod
+    def validate_passwords(cls, password: str) -> str:
+        if " " in password:
+            raise ValueError("Password must not contain spaces")
+        if not re.search(r"[A-Z]", password):
+            raise ValueError("Password must contain at least one uppercase letter")
+        if not re.search(r"[a-z]", password):
+            raise ValueError("Password must contain at least one lowercase letter")
+        if not re.search(r"\d", password):
+            raise ValueError("Password must contain at least one number")
+        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+            raise ValueError("Password must contain at least one special character")
+
+        return password
+
+
+class ResetPasswordRequest(BaseModel):
+    email: Annotated[EmailStr, Field(..., examples=["john.doe@example.com"])]
+    password: Annotated[
+        str, Field(..., min_length=8, max_length=24, examples=["Pass123!"])
+    ]
+
+    @field_validator("password")
+    @classmethod
+    def validate_passwords(cls, password: str) -> str:
+        if " " in password:
+            raise ValueError("Password must not contain spaces")
+        if not re.search(r"[A-Z]", password):
+            raise ValueError("Password must contain at least one uppercase letter")
+        if not re.search(r"[a-z]", password):
+            raise ValueError("Password must contain at least one lowercase letter")
+        if not re.search(r"\d", password):
+            raise ValueError("Password must contain at least one number")
+        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+            raise ValueError("Password must contain at least one special character")
+
+        return password
+
+
 class TokenResponse(BaseModel):
     access_token: Annotated[
         str,

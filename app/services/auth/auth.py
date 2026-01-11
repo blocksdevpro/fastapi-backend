@@ -1,3 +1,6 @@
+from app.schemas.auth import ChangePasswordRequest
+from app.schemas.auth import ResetPasswordRequest
+from app.schemas.auth import ForgetPasswordRequest
 from uuid import UUID
 from sqlalchemy.exc import IntegrityError
 from app.models.session import Session
@@ -39,14 +42,14 @@ class AuthService(BaseService):
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
-    async def _find_user_by_id(self, user_id: str) -> Optional[User]:
+    async def _find_user_by_id(self, user_id: UUID) -> Optional[User]:
         self.logger.info(f"Finding user with {user_id=}")
         query = select(User).where(User.id == user_id)
 
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
 
-    async def _get_user_by_id(self, user_id: str) -> User:
+    async def _get_user_by_id(self, user_id: UUID) -> User:
         user = await self._find_user_by_id(user_id)
         if not user:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
@@ -76,9 +79,8 @@ class AuthService(BaseService):
     async def login(self, request: Request, payload: LoginRequest) -> AuthResponse:
         user = await self._find_user(payload.email)
         if not user or not await self.password_service.verify_password(
-            # pyrefly: ignore [bad-argument-type]
             payload.password,
-            user.hashed_password,
+            user.hashed_password,  # pyrefly: ignore [bad-argument-type]
         ):
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid credentials")
 
@@ -90,9 +92,14 @@ class AuthService(BaseService):
         token, session = await self.session_service.validate_refresh_token(
             payload.refresh_token
         )
-        user = await self._get_user_by_id(token.sub)
-        # pyrefly: ignore [bad-argument-type]
-        tokens = await self.session_service.create_tokens(request, user, session.id)
+        user = await self._get_user_by_id(
+            token.sub  # pyrefly: ignore [bad-argument-type]
+        )
+        tokens = await self.session_service.create_tokens(
+            request,
+            user,
+            session.id,  # pyrefly: ignore [bad-argument-type]
+        )
 
         return AuthResponse(
             user=user.to_response(),
@@ -105,7 +112,9 @@ class AuthService(BaseService):
         return await self.session_service.revoke_refresh_token(payload.refresh_token)
 
     async def current_user(self, token: Token) -> User:
-        user = await self._find_user_by_id(token.sub)
+        user = await self._find_user_by_id(
+            token.sub  # pyrefly: ignore [bad-argument-type]
+        )
         if not user:
             raise HTTPException(
                 status.HTTP_401_UNAUTHORIZED, "Invalid or expired access token"
@@ -113,12 +122,15 @@ class AuthService(BaseService):
         return user
 
     async def get_sessions(self, user: User) -> Sequence[Session]:
-        # pyrefly: ignore [bad-argument-type]
-        return await self.session_service.find_active_sessions(user.id)
+        return await self.session_service.find_active_sessions(
+            user.id  # pyrefly: ignore [bad-argument-type]
+        )
 
     async def revoke(self, user: User, session_id: UUID) -> MessageResponse:
-        # pyrefly: ignore [bad-argument-type]
-        return await self.session_service.revoke_session(user.id, session_id)
+        return await self.session_service.revoke_session(
+            user.id,  # pyrefly: ignore [bad-argument-type]
+            session_id,
+        )
 
     async def update(self, user: User, payload: UpdateUserRequest) -> User:
         user.name = payload.name
@@ -126,3 +138,39 @@ class AuthService(BaseService):
         await self.session.commit()
         await self.session.refresh(user)
         return user
+
+    async def forget_password(
+        self, request: Request, payload: ForgetPasswordRequest
+    ) -> MessageResponse:
+        user = await self._find_user(payload.email)
+        if not user:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
+        # TODO: implement the token and send the password-reset email.
+        return MessageResponse(message="Password reset email sent")
+
+    async def reset_password(
+        self, request: Request, payload: ResetPasswordRequest
+    ) -> MessageResponse:
+        user = await self._find_user(payload.email)
+        if not user:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
+        # TODO: implement the password reset logic.
+        return MessageResponse(message="Password reset successfully")
+
+    async def change_password(
+        self, request: Request, user: User, payload: ChangePasswordRequest
+    ) -> MessageResponse:
+        if not await self.password_service.verify_password(
+            payload.old_password,
+            user.hashed_password,  # pyrefly: ignore [bad-argument-type]
+        ):
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid old password")
+
+        user.hashed_password = await self.password_service.hash_password(
+            payload.new_password
+        )
+
+        await self.session.commit()
+        await self.session.refresh(user)
+
+        return MessageResponse(message="Password changed successfully")

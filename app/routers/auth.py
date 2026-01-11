@@ -1,5 +1,4 @@
 # app/routers/auth.py
-
 from uuid import UUID
 from fastapi import Request, Path
 
@@ -15,6 +14,9 @@ from app.schemas.auth import (
     SessionResponse,
     SignupRequest,
     LoginRequest,
+    ResetPasswordRequest,
+    ChangePasswordRequest,
+    ForgetPasswordRequest,
 )
 
 from app.schemas.response import APIResponse
@@ -73,7 +75,7 @@ async def sessions(
     return await auth_service.get_sessions(user)
 
 
-@router.post("/revoke", response_model=APIResponse[MessageResponse])
+@router.post("/revoke/{session_id}", response_model=APIResponse[MessageResponse])
 async def revoke(
     request: Request,
     user: CurrentUserDependency,
@@ -83,7 +85,7 @@ async def revoke(
     return await auth_service.revoke(user, session_id)
 
 
-@router.put("/update", response_model=APIResponse[UserResponse])
+@router.patch("/update", response_model=APIResponse[UserResponse])
 async def update(
     request: Request,
     user: CurrentUserDependency,
@@ -91,3 +93,31 @@ async def update(
     payload: UpdateUserRequest,
 ):
     return await auth_service.update(user, payload)
+
+
+@router.post("/forget-password", response_model=APIResponse[MessageResponse])
+async def forget_password(
+    request: Request,
+    payload: ForgetPasswordRequest,
+    auth_service: AuthServiceDependency,
+):
+    return await auth_service.forget_password(request, payload)
+
+
+@router.post("/reset-password", response_model=APIResponse[MessageResponse])
+async def reset_password(
+    request: Request,
+    payload: ResetPasswordRequest,
+    auth_service: AuthServiceDependency,
+):
+    return await auth_service.reset_password(request, payload)
+
+
+@router.post("/change-password", response_model=APIResponse[MessageResponse])
+async def change_password(
+    request: Request,
+    user: CurrentUserDependency,
+    auth_service: AuthServiceDependency,
+    payload: ChangePasswordRequest,
+):
+    return await auth_service.change_password(request, user, payload)

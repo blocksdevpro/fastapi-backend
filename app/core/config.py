@@ -2,9 +2,16 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    # Database Configs
     DATABASE_URL: str
     TEST_DATABASE_URL: str
 
+    # Email Configs
+    RESEND_FROM_EMAIL: str
+    RESEND_FROM_NAME: str
+    RESEND_API_KEY: str
+
+    # JWT Configs
     JWT_ALGORITHM: str
 
     JWT_ACCESS_SECRET_KEY: str
@@ -14,6 +21,8 @@ class Settings(BaseSettings):
     JWT_REFRESH_EXPIRE_MINUTES: int
 
     MAX_ACTIVE_SESSIONS: int = 5
+
+    FRONTEND_URL: str = "http://localhost:3000"
 
     model_config = SettingsConfigDict(
         env_file=".env",
