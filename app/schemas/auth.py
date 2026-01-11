@@ -94,7 +94,9 @@ class ChangePasswordRequest(BaseModel):
 
 
 class ResetPasswordRequest(BaseModel):
-    email: Annotated[EmailStr, Field(..., examples=["john.doe@example.com"])]
+    token: Annotated[
+        str, Field(..., min_length=32, max_length=64, examples=["abc123..."])
+    ]
     password: Annotated[
         str, Field(..., min_length=8, max_length=24, examples=["Pass123!"])
     ]
@@ -114,6 +116,12 @@ class ResetPasswordRequest(BaseModel):
             raise ValueError("Password must contain at least one special character")
 
         return password
+
+
+class VerifyEmailRequest(BaseModel):
+    token: Annotated[
+        str, Field(..., min_length=32, max_length=64, examples=["abc123..."])
+    ]
 
 
 class TokenResponse(BaseModel):

@@ -9,6 +9,7 @@ class EmailService(BaseService):
         self.from_email = settings.RESEND_FROM_EMAIL
         self.from_name = settings.RESEND_FROM_NAME
         resend.api_key = settings.RESEND_API_KEY
+        super().__init__()
 
     async def send_email(self, to: str, subject: str, html: str):
         params: resend.Emails.SendParams = {
@@ -34,6 +35,19 @@ class EmailService(BaseService):
         <h1>Reset Your Password</h1>
         <p>Click the link below to reset your password:</p>
         <a href="{reset_link}">{reset_link}</a>
+        <p>This link expires in 15 minutes.</p>
         <p>If you didn't request this, please ignore this email.</p>
+        """
+        await self.send_email(to, subject, html)
+
+    async def send_verification_email(self, to: str, token: str):
+        verify_link = f"{settings.FRONTEND_URL}/verify-email?token={token}"
+        subject = "Verify Your Email Address"
+        html = f"""
+        <h1>Verify Your Email</h1>
+        <p>Click the link below to verify your email address:</p>
+        <a href="{verify_link}">{verify_link}</a>
+        <p>This link expires in 24 hours.</p>
+        <p>If you didn't create an account, please ignore this email.</p>
         """
         await self.send_email(to, subject, html)

@@ -17,6 +17,7 @@ from app.schemas.auth import (
     ResetPasswordRequest,
     ChangePasswordRequest,
     ForgetPasswordRequest,
+    VerifyEmailRequest,
 )
 
 from app.schemas.response import APIResponse
@@ -121,3 +122,23 @@ async def change_password(
     payload: ChangePasswordRequest,
 ):
     return await auth_service.change_password(request, user, payload)
+
+
+@router.post("/send-verification-email", response_model=APIResponse[MessageResponse])
+async def send_verification_email(
+    request: Request,
+    user: CurrentUserDependency,
+    auth_service: AuthServiceDependency,
+):
+    """Send email verification link to the currently logged-in user."""
+    return await auth_service.send_verification_email(user)
+
+
+@router.post("/verify-email", response_model=APIResponse[MessageResponse])
+async def verify_email(
+    request: Request,
+    payload: VerifyEmailRequest,
+    auth_service: AuthServiceDependency,
+):
+    """Verify email using the token from the verification email."""
+    return await auth_service.verify_email(request, payload)

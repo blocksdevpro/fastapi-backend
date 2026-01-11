@@ -22,6 +22,11 @@ class Settings(BaseSettings):
 
     MAX_ACTIVE_SESSIONS: int = 5
 
+    # Verification Token Configs
+    VERIFICATION_TOKEN_SECRET: str
+    PASSWORD_RESET_EXPIRE_MINUTES: int = 15
+    EMAIL_VERIFICATION_EXPIRE_MINUTES: int = 1440  # 24 hours
+
     FRONTEND_URL: str = "http://localhost:3000"
 
     model_config = SettingsConfigDict(
