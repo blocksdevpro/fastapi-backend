@@ -2,9 +2,17 @@
 from datetime import datetime
 from pydantic import BaseModel
 from pydantic import Field, EmailStr
-from typing import Optional, Annotated
+from typing import Optional, Annotated, Literal
 from pydantic import field_validator
 import re
+from app.schemas.common import QueryParams
+
+
+class UserParams(QueryParams):
+    sort_by: Annotated[
+        Literal["created_at", "updated_at", "name", "email"],
+        Field("created_at", description="Field to sort by"),
+    ]
 
 
 class UserCreate(BaseModel):

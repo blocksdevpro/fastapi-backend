@@ -1,6 +1,7 @@
+from app.schemas.common import QueryParams
 from datetime import datetime
 from pydantic import BaseModel, Field
-from typing import Optional, Annotated
+from typing import Optional, Annotated, Literal
 
 
 NameField = Annotated[
@@ -20,6 +21,13 @@ DescriptionField = Annotated[
 
 PriceField = Annotated[float, Field(..., ge=1, le=100_000, examples=[799])]
 StockField = Annotated[int, Field(..., ge=0, le=100, examples=[5])]
+
+
+class ProductParams(QueryParams):
+    sort_by: Annotated[
+        Literal["created_at", "updated_at", "name", "price", "stock"],
+        Field("created_at", description="Field to sort by"),
+    ]
 
 
 class CreateProductRequest(BaseModel):

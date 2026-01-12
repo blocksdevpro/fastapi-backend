@@ -10,7 +10,7 @@ class QueryParams(BaseModel):
     ]
 
     sort_by: Annotated[
-        Literal["created_at", "updated_at", "name", "price"],
+        Literal["created_at", "updated_at"],
         Field("created_at", description="Field to sort by"),
     ]
     sort_order: Annotated[

@@ -8,8 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.handlers.middlewares import RequestIDMiddleware, RequestDurationMiddleware
 
 # import routers
-from app.routers.auth import router as auth_router
-from app.routers.products import router as products_router
+from app.api.endpoints import router as api_router
 
 # import exception handlers
 from app.handlers.exception import (
@@ -61,8 +60,7 @@ app.add_middleware(SlowAPIMiddleware)
 app.add_middleware(RequestDurationMiddleware)
 app.add_middleware(RequestIDMiddleware)
 
-app.include_router(auth_router)
-app.include_router(products_router)
+app.include_router(api_router)
 
 app.add_exception_handler(HTTPException, http_exception_handler)  # type: ignore
 app.add_exception_handler(RequestValidationError, validation_exception_handler)  # type: ignore

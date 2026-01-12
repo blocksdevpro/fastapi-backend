@@ -11,7 +11,7 @@ from fastapi import Depends, status
 from app.db.session import AsyncSession, get_session
 
 from sqlalchemy import select, Select, delete
-from app.schemas.common import QueryParams
+from app.schemas.product import ProductParams
 from sqlalchemy import asc, desc, or_, func
 
 
@@ -27,7 +27,7 @@ class ProductService(BaseService):
         )
         return result.scalar_one_or_none()
 
-    async def _find_products(self, user_id: UUID, params: QueryParams):
+    async def _find_products(self, user_id: UUID, params: ProductParams):
         data_query = select(Product).where(Product.user_id == user_id)
 
         # apply filters
@@ -62,7 +62,7 @@ class ProductService(BaseService):
             },
         }
 
-    def _apply_filters(self, query: Select, params: QueryParams) -> Select:
+    def _apply_filters(self, query: Select, params: ProductParams) -> Select:
         if params.query:
             query = query.where(
                 or_(
@@ -72,7 +72,7 @@ class ProductService(BaseService):
             )
         return query
 
-    def _apply_sorting(self, query: Select, params: QueryParams) -> Select:
+    def _apply_sorting(self, query: Select, params: ProductParams) -> Select:
         sort_column = getattr(self.model, params.sort_by, "created_at")
         order_by = asc(sort_column) if params.sort_order == "asc" else desc(sort_column)
 
@@ -85,7 +85,7 @@ class ProductService(BaseService):
             raise HTTPException(status.HTTP_404_NOT_FOUND, "Product not found.")
         return product
 
-    async def get_products(self, user_id: UUID, params: QueryParams):
+    async def get_products(self, user_id: UUID, params: ProductParams):
         products = await self._find_products(user_id, params)
         if not products:
             self.logger.warning(f"Products not found {user_id=}.")

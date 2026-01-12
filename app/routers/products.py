@@ -1,3 +1,4 @@
+from app.schemas.product import ProductParams
 from app.schemas.product import UpdateProductRequest
 from typing import Annotated
 from uuid import UUID
@@ -5,7 +6,6 @@ from fastapi import Depends, Request, Query
 from app.schemas.product import CreateProductRequest
 from app.utils.router import AutoAPIResponseRouter
 from app.dependencies import ProductServiceDependency, CurrentUserDependency
-from app.schemas.common import QueryParams
 from app.schemas.response import APIResponse
 from app.schemas.product import ProductResponse
 
@@ -30,7 +30,7 @@ async def get_products(
     request: Request,
     user: CurrentUserDependency,
     service: ProductServiceDependency,
-    params: QueryParams = Depends(),
+    params: ProductParams = Depends(),
 ):
     return await service.get_products(user.id, params)
 
