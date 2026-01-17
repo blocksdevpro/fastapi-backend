@@ -1,21 +1,18 @@
 # app/models/product.py
+from app.models.common import BaseMixin
 from typing import TYPE_CHECKING
 from uuid import UUID as PyUUID
 from app.db.session import Base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import UUID, String, text, Float, Integer, ForeignKey
-from app.models.common import TimestampMixin
+from sqlalchemy import UUID, String, Float, Integer, ForeignKey
 
 if TYPE_CHECKING:
     from app.models.user import User
 
 
-class Product(TimestampMixin, Base):
+class Product(BaseMixin, Base):
     __tablename__ = "products"
 
-    id: Mapped[PyUUID] = mapped_column(
-        UUID, server_default=text("gen_random_uuid()"), primary_key=True
-    )
     user_id: Mapped[PyUUID] = mapped_column(
         UUID,
         ForeignKey("users.id", ondelete="CASCADE"),

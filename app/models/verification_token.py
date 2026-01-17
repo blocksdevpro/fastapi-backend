@@ -1,12 +1,12 @@
 # app/models/verification_token.py
 
+from app.models.common import BaseMixin
 from enum import Enum
 from uuid import UUID as PyUUID
 from datetime import datetime
 from app.db.session import Base
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import UUID, Boolean, DateTime, ForeignKey, String, text, Index
-from app.models.common import TimestampMixin
+from sqlalchemy import UUID, Boolean, DateTime, ForeignKey, String, Index
 
 
 class TokenType(str, Enum):
@@ -14,12 +14,9 @@ class TokenType(str, Enum):
     EMAIL_VERIFICATION = "email_verification"
 
 
-class VerificationToken(TimestampMixin, Base):
+class VerificationToken(BaseMixin, Base):
     __tablename__ = "verification_tokens"
 
-    id: Mapped[PyUUID] = mapped_column(
-        UUID, server_default=text("gen_random_uuid()"), primary_key=True
-    )
     user_id: Mapped[PyUUID] = mapped_column(
         UUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )

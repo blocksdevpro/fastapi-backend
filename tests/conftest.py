@@ -30,13 +30,14 @@ async def setup_test_database():
 
     # Create async engine in the test session's event loop
     async_engine = create_async_engine(
-        settings.TEST_DATABASE_URL,
+        settings.DATABASE_URL,
         echo=False,
         pool_size=10,
         max_overflow=20,
         pool_pre_ping=True,
         pool_timeout=30,
         pool_recycle=1800,
+        query_cache_size=0,
     )
 
     # Create async_session from async_engine
@@ -75,7 +76,10 @@ app.dependency_overrides[get_session] = override_get_session
 
 @pytest_asyncio.fixture
 async def client():
+    BASE_URL = "http://test"
+    BASE_PATH = "/api"
+
     async with AsyncClient(
-        transport=ASGITransport(app), base_url="http://test"
+        transport=ASGITransport(app), base_url=f"{BASE_URL}{BASE_PATH}"
     ) as async_client:
         yield async_client

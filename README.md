@@ -59,7 +59,6 @@ Create a `.env` file in the root directory. You can use the provided `.env.examp
 ```python
 # Database
 DATABASE_URL = "MAIN_DB_URL"
-TEST_DATABASE_URL = "TEST_DB_URL used in pytest"
 
 # Security
 JWT_ALGORITHM = "HS256"

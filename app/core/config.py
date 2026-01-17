@@ -1,10 +1,17 @@
+import os
+from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class Settings(BaseSettings):
+class AppSettings(BaseSettings):
+    """Shared settings across all environments"""
+
+    PROJECT_NAME: str = "FastAPI Backend"
+    VERSION: str = "1.0.0"
+    API_V1_PREFIX: str = "/api"
+
     # Database Configs
     DATABASE_URL: str
-    TEST_DATABASE_URL: str
 
     # Email Configs
     RESEND_FROM_EMAIL: str
@@ -30,10 +37,43 @@ class Settings(BaseSettings):
     FRONTEND_URL: str = "http://localhost:3000"
 
     model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=True,
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=True, extra="ignore"
     )
 
 
-settings = Settings()  # type: ignore[call-arg]
+class DevelopmentSettings(AppSettings):
+    DEBUG: bool = True
+    LOG_LEVEL: str = "DEBUG"
+
+
+class ProductionSettings(AppSettings):
+    DEBUG: bool = False
+    LOG_LEVEL: str = "INFO"
+
+
+class TestSettings(AppSettings):
+    DATABASE_URL: str
+
+    DEBUG: bool = False
+    LOG_LEVEL: str = "INFO"
+
+    model_config = SettingsConfigDict(
+        env_file=".env.local",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra="ignore",
+    )
+
+
+@lru_cache
+def get_settings() -> AppSettings:
+    env = os.getenv("ENVIRONMENT", "development").lower()
+    config_map = {
+        "development": DevelopmentSettings,
+        "production": ProductionSettings,
+        "test": TestSettings,
+    }
+    return config_map[env]()
+
+
+settings = get_settings()

@@ -1,30 +1,26 @@
 # app/models/user.py
 
+from app.models.common import BaseMixin
 from enum import Enum
-from uuid import UUID as PyUUID
 from app.db.session import Base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import UUID, String, Boolean, text, Enum as SQLAlchemyEnum
-from app.models.common import TimestampMixin
+from sqlalchemy import String, Boolean, Enum as SQLAlchemyEnum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.models.product import Product
 
 
-class UserRole(str, Enum):
+class UserRole(Enum):
     """Enum for user roles"""
 
     USER = "user"
     ADMIN = "admin"
 
 
-class User(TimestampMixin, Base):
+class User(BaseMixin, Base):
     __tablename__ = "users"
 
-    id: Mapped[PyUUID] = mapped_column(
-        UUID, server_default=text("gen_random_uuid()"), primary_key=True
-    )
     name: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     email: Mapped[str] = mapped_column(
         String(255), nullable=False, unique=True, index=True

@@ -1,3 +1,4 @@
+from app.core.config import settings
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from app.core.slowapi import limiter
@@ -40,11 +41,11 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="FastAPI Backend",
-    description="FastAPI Backend",
-    version="1.0.0",
-    docs_url="/api/docs",
-    redoc_url="/api/redoc",
+    title=settings.PROJECT_NAME,
+    description=settings.PROJECT_NAME,
+    version=settings.VERSION,
+    docs_url=settings.API_V1_PREFIX + "/docs",
+    redoc_url=settings.API_V1_PREFIX + "/redoc",
     lifespan=lifespan,
 )
 app.state.limiter = limiter
@@ -67,7 +68,7 @@ app.add_exception_handler(RequestValidationError, validation_exception_handler) 
 app.add_exception_handler(RateLimitExceeded, rate_limit_exception_handler)  # type: ignore
 
 
-@app.get("/health")
+@app.get(settings.API_V1_PREFIX + "/health")
 async def read_health():
     return {"status": "HEALTHY"}
 

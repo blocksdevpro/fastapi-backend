@@ -24,6 +24,8 @@ from app.schemas.response import APIResponse
 from app.schemas.user import UserResponse, UpdateUserRequest
 from app.utils.router import AutoAPIResponseRouter
 
+from app.core.slowapi import limiter
+
 router = AutoAPIResponseRouter(prefix="/auth", tags=["Auth"])
 
 
@@ -97,6 +99,7 @@ async def update(
 
 
 @router.post("/forget-password", response_model=APIResponse[MessageResponse])
+@limiter.limit("5/minute")
 async def forget_password(
     request: Request,
     payload: ForgetPasswordRequest,
@@ -125,6 +128,7 @@ async def change_password(
 
 
 @router.post("/send-verification-email", response_model=APIResponse[MessageResponse])
+@limiter.limit("5/minute")
 async def send_verification_email(
     request: Request,
     user: CurrentUserDependency,

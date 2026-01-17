@@ -9,3 +9,7 @@ clean:
 format:
 	ruff check --fix && ruff format
 	echo "- Code formatted"
+
+test:
+	make clean
+	python -m pytest -v tests

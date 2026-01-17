@@ -1,5 +1,6 @@
 # app/handlers/response.py
 
+from slowapi.errors import RateLimitExceeded
 from functools import wraps
 from typing import Any, Callable, Union
 from fastapi.exceptions import HTTPException
@@ -27,7 +28,7 @@ def response_handler() -> Callable:
         async def wrapper(*args, **kwargs):
             try:
                 result = await func(*args, **kwargs)
-            except HTTPException:
+            except (HTTPException, RateLimitExceeded):
                 raise
             except Exception as e:
                 logger.error("Internal Server Error: {}".format(e))
