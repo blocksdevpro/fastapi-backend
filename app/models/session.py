@@ -21,7 +21,7 @@ class Session(BaseMixin, Base):
     device_id: Mapped[str] = mapped_column(String(255), index=True)
     token_hash: Mapped[str] = mapped_column(String(255), unique=True, index=True)
 
-    ip_address: Mapped[str] = mapped_column(String(45))  # IPv6 max length
+    ip_address: Mapped[str] = mapped_column(String(50))  # IPv6 max length
     user_agent: Mapped[str] = mapped_column(String(500))
     revoked: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
 

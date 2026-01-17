@@ -26,7 +26,7 @@ class User(BaseMixin, Base):
         String(255), nullable=False, unique=True, index=True
     )
     email_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[UserRole] = mapped_column(
         SQLAlchemyEnum(UserRole), nullable=False, default=UserRole.USER
     )

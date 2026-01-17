@@ -66,7 +66,7 @@ class AuthService(BaseService):
         return user
 
     async def _create_user(self, name: str, email: str, password: str):
-        user = User(name=name, email=email, hashed_password=password)
+        user = User(name=name, email=email, password_hash=password)
 
         self.session.add(user)
         await self.session.commit()
@@ -75,10 +75,8 @@ class AuthService(BaseService):
 
     async def signup(self, request: Request, payload: SignupRequest) -> AuthResponse:
         try:
-            hashed_password = await self.password_service.hash_password(
-                payload.password
-            )
-            user = await self._create_user(payload.name, payload.email, hashed_password)
+            password_hash = await self.password_service.hash_password(payload.password)
+            user = await self._create_user(payload.name, payload.email, password_hash)
         except IntegrityError:
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "User already exists")
 
@@ -90,7 +88,7 @@ class AuthService(BaseService):
         user = await self._find_user(payload.email)
         if not user or not await self.password_service.verify_password(
             payload.password,
-            user.hashed_password,  # pyrefly: ignore [bad-argument-type]
+            user.password_hash,  # pyrefly: ignore [bad-argument-type]
         ):
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid credentials")
 
@@ -174,9 +172,7 @@ class AuthService(BaseService):
         # Get the user associated with the token
         user = await self._get_user_by_id(token_record.user_id)
         # Update the password
-        user.hashed_password = await self.password_service.hash_password(
-            payload.password
-        )
+        user.password_hash = await self.password_service.hash_password(payload.password)
         # Consume the token (single-use)
         await self.verification_service.consume_token(token_record)
         await self.session.commit()
@@ -218,11 +214,11 @@ class AuthService(BaseService):
     ) -> MessageResponse:
         if not await self.password_service.verify_password(
             payload.old_password,
-            user.hashed_password,  # pyrefly: ignore [bad-argument-type]
+            user.password_hash,  # pyrefly: ignore [bad-argument-type]
         ):
             raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid old password")
 
-        user.hashed_password = await self.password_service.hash_password(
+        user.password_hash = await self.password_service.hash_password(
             payload.new_password
         )
 

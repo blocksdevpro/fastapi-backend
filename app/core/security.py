@@ -11,7 +11,7 @@ def get_bearer_token(
     if not credentials or not credentials.credentials:
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED,
-            "Bearer token not found",
+            "Authentication required",
             headers={"WWW-Authenticate": "Bearer"},
         )
     return credentials.credentials

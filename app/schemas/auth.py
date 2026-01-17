@@ -1,55 +1,40 @@
-from typing import Optional, Annotated
-from datetime import datetime
-from pydantic import BaseModel, Field, EmailStr, field_validator
 import re
+from datetime import datetime
+from typing import Optional, Annotated
+from pydantic import BaseModel, Field, EmailStr, AfterValidator
 from app.schemas.user import UserResponse
+
+
+def password_validator(password: str) -> str:
+    if " " in password:
+        raise ValueError("Password must not contain spaces")
+    if not re.search(r"[A-Z]", password):
+        raise ValueError("Password must contain at least one uppercase letter")
+    if not re.search(r"[a-z]", password):
+        raise ValueError("Password must contain at least one lowercase letter")
+    if not re.search(r"\d", password):
+        raise ValueError("Password must contain at least one number")
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        raise ValueError("Password must contain at least one special character")
+
+    return password
+
+
+# Create a reusable type
+PasswordField = Annotated[
+    str, Field(..., min_length=8, max_length=24), AfterValidator(password_validator)
+]
 
 
 class SignupRequest(BaseModel):
     name: Annotated[str, Field(..., min_length=3, max_length=50, examples=["John Doe"])]
     email: Annotated[EmailStr, Field(..., examples=["john.doe@example.com"])]
-    password: Annotated[
-        str, Field(..., min_length=8, max_length=24, examples=["Pass123!"])
-    ]
-
-    @field_validator("password")
-    @classmethod
-    def validate_password(cls, password: str) -> str:
-        if " " in password:
-            raise ValueError("Password must not contain spaces")
-        if not re.search(r"[A-Z]", password):
-            raise ValueError("Password must contain at least one uppercase letter")
-        if not re.search(r"[a-z]", password):
-            raise ValueError("Password must contain at least one lowercase letter")
-        if not re.search(r"\d", password):
-            raise ValueError("Password must contain at least one number")
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
-            raise ValueError("Password must contain at least one special character")
-
-        return password
+    password: PasswordField
 
 
 class LoginRequest(BaseModel):
     email: Annotated[EmailStr, Field(..., examples=["john.doe@example.com"])]
-    password: Annotated[
-        str, Field(..., min_length=8, max_length=24, examples=["Pass123!"])
-    ]
-
-    @field_validator("password")
-    @classmethod
-    def validate_password(cls, password: str) -> str:
-        if " " in password:
-            raise ValueError("Password must not contain spaces")
-        if not re.search(r"[A-Z]", password):
-            raise ValueError("Password must contain at least one uppercase letter")
-        if not re.search(r"[a-z]", password):
-            raise ValueError("Password must contain at least one lowercase letter")
-        if not re.search(r"\d", password):
-            raise ValueError("Password must contain at least one number")
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
-            raise ValueError("Password must contain at least one special character")
-
-        return password
+    password: PasswordField
 
 
 class RefreshRequest(BaseModel):
@@ -57,9 +42,7 @@ class RefreshRequest(BaseModel):
         str,
         Field(
             ...,
-            examples=[
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
-            ],
+            examples=["<refresh_token>"],
         ),
     ]
 
@@ -69,53 +52,15 @@ class ForgetPasswordRequest(BaseModel):
 
 
 class ChangePasswordRequest(BaseModel):
-    old_password: Annotated[
-        str, Field(..., min_length=8, max_length=24, examples=["Pass123!"])
-    ]
-    new_password: Annotated[
-        str, Field(..., min_length=8, max_length=24, examples=["Pass123!"])
-    ]
-
-    @field_validator("old_password", "new_password")
-    @classmethod
-    def validate_passwords(cls, password: str) -> str:
-        if " " in password:
-            raise ValueError("Password must not contain spaces")
-        if not re.search(r"[A-Z]", password):
-            raise ValueError("Password must contain at least one uppercase letter")
-        if not re.search(r"[a-z]", password):
-            raise ValueError("Password must contain at least one lowercase letter")
-        if not re.search(r"\d", password):
-            raise ValueError("Password must contain at least one number")
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
-            raise ValueError("Password must contain at least one special character")
-
-        return password
+    old_password: PasswordField
+    new_password: PasswordField
 
 
 class ResetPasswordRequest(BaseModel):
     token: Annotated[
         str, Field(..., min_length=32, max_length=64, examples=["abc123..."])
     ]
-    password: Annotated[
-        str, Field(..., min_length=8, max_length=24, examples=["Pass123!"])
-    ]
-
-    @field_validator("password")
-    @classmethod
-    def validate_passwords(cls, password: str) -> str:
-        if " " in password:
-            raise ValueError("Password must not contain spaces")
-        if not re.search(r"[A-Z]", password):
-            raise ValueError("Password must contain at least one uppercase letter")
-        if not re.search(r"[a-z]", password):
-            raise ValueError("Password must contain at least one lowercase letter")
-        if not re.search(r"\d", password):
-            raise ValueError("Password must contain at least one number")
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
-            raise ValueError("Password must contain at least one special character")
-
-        return password
+    password: PasswordField
 
 
 class VerifyEmailRequest(BaseModel):
@@ -129,18 +74,14 @@ class TokenResponse(BaseModel):
         str,
         Field(
             ...,
-            examples=[
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
-            ],
+            examples=["<access_token>"],
         ),
     ]
     refresh_token: Annotated[
         str,
         Field(
             ...,
-            examples=[
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
-            ],
+            examples=["<refresh_token>"],
         ),
     ]
     token_type: Annotated[str, Field(..., examples=["bearer"])]

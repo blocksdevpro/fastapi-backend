@@ -27,7 +27,7 @@ def upgrade() -> None:
         sa.Column("name", sa.String(length=100), nullable=False),
         sa.Column("email", sa.String(length=255), nullable=False),
         sa.Column("email_verified", sa.Boolean(), nullable=False),
-        sa.Column("hashed_password", sa.String(length=255), nullable=False),
+        sa.Column("password_hash", sa.String(length=255), nullable=False),
         sa.Column("role", sa.Enum("USER", "ADMIN", name="userrole"), nullable=False),
         sa.Column(
             "id", sa.UUID(), server_default=sa.text("gen_random_uuid()"), nullable=False
@@ -68,7 +68,7 @@ def upgrade() -> None:
         sa.Column("user_id", sa.UUID(), nullable=False),
         sa.Column("device_id", sa.String(length=255), nullable=False),
         sa.Column("token_hash", sa.String(length=255), nullable=False),
-        sa.Column("ip_address", sa.String(length=45), nullable=False),
+        sa.Column("ip_address", sa.String(length=50), nullable=False),
         sa.Column("user_agent", sa.String(length=500), nullable=False),
         sa.Column("revoked", sa.Boolean(), nullable=False),
         sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),

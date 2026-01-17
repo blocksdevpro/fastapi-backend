@@ -31,7 +31,7 @@ def response_handler() -> Callable:
             except (HTTPException, RateLimitExceeded):
                 raise
             except Exception as e:
-                logger.error("Internal Server Error: {}".format(e))
+                logger.exception(f"Unhandled error in {func.__name__}: {e}")
                 raise HTTPException(status_code=500, detail="Internal Server Error")
 
             # transform models using their to_response() func.

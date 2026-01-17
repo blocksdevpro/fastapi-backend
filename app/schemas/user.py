@@ -45,6 +45,8 @@ class UserResponse(BaseModel):
     id: Annotated[str, Field(...)]
     name: Annotated[str, Field(...)]
     email: Annotated[EmailStr, Field(...)]
+    role: Annotated[str, Field(...)]
+    email_verified: Annotated[bool, Field(...)]
 
     created_at: Annotated[datetime, Field(...)]
     updated_at: Optional[Annotated[datetime, Field(...)]]

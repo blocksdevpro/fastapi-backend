@@ -1,3 +1,4 @@
+from typing import Union
 import os
 from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -12,6 +13,12 @@ class AppSettings(BaseSettings):
 
     # Database Configs
     DATABASE_URL: str
+    DB_POOL_SIZE: int = 10
+    DB_MAX_OVERFLOW: int = 20
+    DB_POOL_PRE_PING: bool = True
+    DB_POOL_TIMEOUT: int = 30
+    DB_POOL_RECYCLE: int = 1800
+    DB_QUERY_CACHE_SIZE: int = 0
 
     # Email Configs
     RESEND_FROM_EMAIL: str
@@ -66,13 +73,15 @@ class TestSettings(AppSettings):
 
 
 @lru_cache
-def get_settings() -> AppSettings:
+def get_settings() -> Union[DevelopmentSettings, ProductionSettings, TestSettings]:
     env = os.getenv("ENVIRONMENT", "development").lower()
     config_map = {
         "development": DevelopmentSettings,
         "production": ProductionSettings,
         "test": TestSettings,
     }
+    if env not in config_map:
+        env = "development"
     return config_map[env]()
 
 

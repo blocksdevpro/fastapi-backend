@@ -28,10 +28,13 @@ def run_alembic_migrations():
     This must be done before creating the async engine context.
     """
     alembic_cfg = Config("alembic.ini")
-    
+
     # Override the database URL to use the test database
-    alembic_cfg.set_main_option("sqlalchemy.url", settings.DATABASE_URL.replace("+asyncpg", "").replace("+aiomysql", ""))
-    
+    alembic_cfg.set_main_option(
+        "sqlalchemy.url",
+        settings.DATABASE_URL.replace("+asyncpg", "").replace("+aiomysql", ""),
+    )
+
     # Run migrations to head
     command.upgrade(alembic_cfg, "head")
 
@@ -41,8 +44,11 @@ def run_alembic_downgrade():
     Downgrade all migrations (cleanup).
     """
     alembic_cfg = Config("alembic.ini")
-    alembic_cfg.set_main_option("sqlalchemy.url", settings.DATABASE_URL.replace("+asyncpg", "").replace("+aiomysql", ""))
-    
+    alembic_cfg.set_main_option(
+        "sqlalchemy.url",
+        settings.DATABASE_URL.replace("+asyncpg", "").replace("+aiomysql", ""),
+    )
+
     # Downgrade to base (removes all tables)
     command.downgrade(alembic_cfg, "base")
 
