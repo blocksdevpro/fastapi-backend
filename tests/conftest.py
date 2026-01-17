@@ -11,19 +11,46 @@ from sqlalchemy.ext.asyncio import (
     AsyncEngine,
 )
 
+from alembic import command
+from alembic.config import Config
+
 from main import app
 from app.db.session import get_session
-from app.db.session import Base
 
 # Global variables to hold engine and session factory
 async_engine: AsyncEngine | None = None
 async_session: async_sessionmaker | None = None
 
 
+def run_alembic_migrations():
+    """
+    Run Alembic migrations synchronously.
+    This must be done before creating the async engine context.
+    """
+    alembic_cfg = Config("alembic.ini")
+    
+    # Override the database URL to use the test database
+    alembic_cfg.set_main_option("sqlalchemy.url", settings.DATABASE_URL.replace("+asyncpg", "").replace("+aiomysql", ""))
+    
+    # Run migrations to head
+    command.upgrade(alembic_cfg, "head")
+
+
+def run_alembic_downgrade():
+    """
+    Downgrade all migrations (cleanup).
+    """
+    alembic_cfg = Config("alembic.ini")
+    alembic_cfg.set_main_option("sqlalchemy.url", settings.DATABASE_URL.replace("+asyncpg", "").replace("+aiomysql", ""))
+    
+    # Downgrade to base (removes all tables)
+    command.downgrade(alembic_cfg, "base")
+
+
 @pytest_asyncio.fixture(scope="session", autouse=True)
 async def setup_test_database():
     """
-    Create database engine and tables at the start of the testing session.
+    Create database engine and apply Alembic migrations at the start of the testing session.
     This ensures the engine is created in the same event loop as the tests.
     """
     global async_engine, async_session
@@ -47,15 +74,15 @@ async def setup_test_database():
         expire_on_commit=False,
     )
 
-    # Create all tables
-    async with async_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
+    # Drop all tables and run Alembic migrations
+    # Note: We need to use the sync version of the URL for Alembic
+    run_alembic_downgrade()  # Clean slate
+    run_alembic_migrations()  # Apply all migrations
 
     yield
 
-    # Cleanup: delete the database and dispose of the engine after all tests
-
+    # Cleanup: downgrade migrations and dispose of the engine after all tests
+    run_alembic_downgrade()
     await async_engine.dispose()
 
 
