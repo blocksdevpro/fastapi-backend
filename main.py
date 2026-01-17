@@ -1,6 +1,5 @@
 from app.core.config import settings
 from fastapi import FastAPI
-from contextlib import asynccontextmanager
 from app.core.slowapi import limiter
 
 # import middlewares
@@ -27,26 +26,12 @@ from app.core.logger import configure_logging
 configure_logging()
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    from sqlalchemy import text
-    from app.db.session import async_engine, Base
-
-    async with async_engine.begin() as connection:
-        await connection.execute(text('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"'))
-        await connection.run_sync(Base.metadata.create_all)
-    yield
-
-    await async_engine.dispose()
-
-
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description=settings.PROJECT_NAME,
     version=settings.VERSION,
     docs_url=settings.API_V1_PREFIX + "/docs",
     redoc_url=settings.API_V1_PREFIX + "/redoc",
-    lifespan=lifespan,
 )
 app.state.limiter = limiter
 
