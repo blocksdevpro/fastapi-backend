@@ -1,5 +1,6 @@
 # app/services/auth/verification.py
 
+from app.core.messages import ErrorMessages
 import secrets
 import hashlib
 from uuid import UUID
@@ -149,7 +150,7 @@ class VerificationService(BaseService):
             self.logger.warning(f"Invalid or expired {token_type.value} token attempt")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid or expired token",
+                detail=ErrorMessages.INVALID_OR_EXPIRED_TOKEN.format(token_type.value),
             )
 
         return token_record

@@ -1,5 +1,6 @@
 # app/models/session.py
 
+from app.schemas.auth import SessionResponse
 from app.models.common import BaseMixin
 from uuid import UUID as PyUUID
 from datetime import datetime
@@ -34,12 +35,4 @@ class Session(BaseMixin, Base):
         return f"Session(id={self.id}, user_id={self.user_id}, device_id={self.device_id}, revoked={self.revoked})"
 
     def to_response(self):
-        return {
-            "id": str(self.id),
-            "user_id": str(self.user_id),
-            "device_id": self.device_id,
-            "ip_address": self.ip_address,
-            "expires_at": self.expires_at,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at,
-        }
+        return SessionResponse.model_validate(self, from_attributes=True)

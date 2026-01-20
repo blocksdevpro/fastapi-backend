@@ -51,18 +51,20 @@ class AppSettings(BaseSettings):
 class DevelopmentSettings(AppSettings):
     DEBUG: bool = True
     LOG_LEVEL: str = "DEBUG"
+    CORS_ORIGINS: list[str] = ["http://localhost:3000"]
 
 
 class ProductionSettings(AppSettings):
     DEBUG: bool = False
     LOG_LEVEL: str = "INFO"
-
+    CORS_ORIGINS: list[str]  # Must be explicitly set
 
 class TestSettings(AppSettings):
     DATABASE_URL: str
 
     DEBUG: bool = False
     LOG_LEVEL: str = "INFO"
+    CORS_ORIGINS: list[str] = ["http://localhost:3000"]
 
     model_config = SettingsConfigDict(
         env_file=".env.local",

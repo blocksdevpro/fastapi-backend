@@ -1,3 +1,4 @@
+from app.core.messages import ErrorMessages
 from app.schemas.user import UserParams
 from fastapi.exceptions import HTTPException
 from app.models.user import User
@@ -63,7 +64,7 @@ class UserService(BaseService):
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found",
+                detail=ErrorMessages.USER_NOT_FOUND,
             )
         return user
 

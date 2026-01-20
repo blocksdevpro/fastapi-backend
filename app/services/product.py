@@ -1,5 +1,5 @@
+from app.core.messages import ErrorMessages
 from app.schemas.product import UpdateProductRequest
-from typing import Literal
 from uuid import UUID
 from typing import Optional
 from fastapi.exceptions import HTTPException
@@ -82,7 +82,9 @@ class ProductService(BaseService):
         product = await self._find_product(user_id, product_id)
         if not product:
             self.logger.warning(f"Product not found {user_id=} {product_id=}.")
-            raise HTTPException(status.HTTP_404_NOT_FOUND, "Product not found.")
+            raise HTTPException(
+                status.HTTP_404_NOT_FOUND, ErrorMessages.PRODUCT_NOT_FOUND
+            )
         return product
 
     async def get_products(self, user_id: UUID, params: ProductParams):
@@ -114,7 +116,9 @@ class ProductService(BaseService):
         product = await self._find_product(user_id, product_id)
         if not product:
             self.logger.warning(f"Product not found {user_id=} {product_id=}.")
-            raise HTTPException(status.HTTP_404_NOT_FOUND, "Product not found.")
+            raise HTTPException(
+                status.HTTP_404_NOT_FOUND, ErrorMessages.PRODUCT_NOT_FOUND
+            )
 
         product.name = payload.name or product.name
         product.description = payload.description or product.description
@@ -127,9 +131,7 @@ class ProductService(BaseService):
         await self.session.refresh(product)
         return product
 
-    async def delete_products(
-        self, user_id: UUID, product_ids: list[UUID] | Literal["all"]
-    ):
+    async def delete_products(self, user_id: UUID, product_ids: list[UUID]):
         result = await self.session.execute(
             delete(Product).where(
                 Product.user_id == user_id, Product.id.in_(product_ids)
@@ -138,5 +140,7 @@ class ProductService(BaseService):
         await self.session.commit()
 
         if result.rowcount == 0:
-            raise HTTPException(status.HTTP_404_NOT_FOUND, "Products not found.")
+            raise HTTPException(
+                status.HTTP_404_NOT_FOUND, ErrorMessages.PRODUCT_NOT_FOUND
+            )
         return result.rowcount

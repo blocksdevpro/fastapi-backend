@@ -62,7 +62,7 @@ async def test_forget_password_existing_user(client: AsyncClient):
         assert res.status_code == 200
         res_json = res.json()
         assert res_json["success"]
-        assert "password reset link" in res_json["data"]["message"].lower()
+        assert "password reset email" in res_json["data"]["message"].lower()
 
         # Verify email was sent
         mock_send.assert_called_once()
@@ -84,7 +84,7 @@ async def test_forget_password_nonexistent_user(client: AsyncClient):
         res_json = res.json()
         assert res_json["success"]
         # Should return same message to prevent email enumeration
-        assert "password reset link" in res_json["data"]["message"].lower()
+        assert "password reset email" in res_json["data"]["message"].lower()
 
         # Email should NOT be sent for non-existent user
         mock_send.assert_not_called()
@@ -104,7 +104,7 @@ async def test_reset_password_invalid_token(client: AsyncClient):
     assert res.status_code == 400
     res_json = res.json()
     assert not res_json["success"]
-    assert "invalid or expired token" in res_json["error"]["message"].lower()
+    assert "invalid or expired" in res_json["error"]["message"].lower()
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -195,7 +195,7 @@ async def test_reset_password_token_single_use(client: AsyncClient):
         },
     )
     assert res.status_code == 400
-    assert "invalid or expired token" in res.json()["error"]["message"].lower()
+    assert "invalid or expired" in res.json()["error"]["message"].lower()
 
     # Update password for subsequent tests
     verification_user["password"] = "NewPass!789"
@@ -259,7 +259,7 @@ async def test_verify_email_invalid_token(client: AsyncClient):
     assert res.status_code == 400
     res_json = res.json()
     assert not res_json["success"]
-    assert "invalid or expired token" in res_json["error"]["message"].lower()
+    assert "invalid or expired" in res_json["error"]["message"].lower()
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -367,7 +367,7 @@ async def test_verify_email_token_single_use(client: AsyncClient):
         json={"token": captured_token},
     )
     assert res.status_code == 400
-    assert "invalid or expired token" in res.json()["error"]["message"].lower()
+    assert "invalid or expired" in res.json()["error"]["message"].lower()
 
 
 # ============================================================================

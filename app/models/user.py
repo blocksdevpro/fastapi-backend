@@ -6,6 +6,7 @@ from app.db.session import Base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, Boolean, Enum as SQLAlchemyEnum
 from typing import TYPE_CHECKING
+from app.schemas.user import UserResponse
 
 if TYPE_CHECKING:
     from app.models.product import Product
@@ -44,11 +45,4 @@ class User(BaseMixin, Base):
         return self.role == UserRole.ADMIN
 
     def to_response(self):
-        return {
-            "id": str(self.id),
-            "name": self.name,
-            "email": self.email,
-            "role": self.role.value,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at,
-        }
+        return UserResponse.model_validate(self, from_attributes=True)

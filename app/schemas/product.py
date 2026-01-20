@@ -1,3 +1,4 @@
+from app.schemas.common import UUIDStr
 from app.schemas.common import QueryParams
 from datetime import datetime
 from pydantic import BaseModel, Field
@@ -45,8 +46,8 @@ class UpdateProductRequest(BaseModel):
 
 
 class ProductResponse(BaseModel):
-    id: str
-    user_id: str
+    id: UUIDStr
+    user_id: UUIDStr
     name: str
     description: str
     price: float

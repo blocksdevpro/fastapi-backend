@@ -1,3 +1,5 @@
+from app.core.messages import ErrorMessages
+from app.core.messages import SuccessMessages
 import re
 import hashlib
 from uuid import UUID
@@ -86,7 +88,8 @@ class SessionService(BaseService):
         session = await self._find_session(token_hash)
         if not session:
             raise HTTPException(
-                status.HTTP_401_UNAUTHORIZED, "Invalid or expired refresh token!"
+                status.HTTP_401_UNAUTHORIZED,
+                ErrorMessages.INVALID_OR_EXPIRED_TOKEN.format("refresh"),
             )
         return token_payload, session
 
@@ -208,7 +211,7 @@ class SessionService(BaseService):
             .values(revoked=True)
         )
         await self.session.commit()
-        return MessageResponse(message="Successfully logged out of the session!")
+        return MessageResponse(message=SuccessMessages.SESSION_LOGGED_OUT)
 
     async def find_active_sessions(self, user_id: UUID) -> Sequence[Session]:
         result = await self.session.execute(
@@ -230,4 +233,4 @@ class SessionService(BaseService):
         session = await self._find_user_session(user_id, session_id)
         if session:
             await self._revoke_session(user_id, session_id)
-        return MessageResponse(message="Successfully revoked the session!")
+        return MessageResponse(message=SuccessMessages.SESSION_REVOKED)

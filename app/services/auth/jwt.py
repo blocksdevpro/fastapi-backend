@@ -1,3 +1,4 @@
+from app.core.messages import ErrorMessages
 from app.services.base import BaseService
 from datetime import datetime, timedelta, timezone
 from jose import jwt, JWTError
@@ -59,7 +60,7 @@ class JwtService(BaseService):
                 )
                 raise HTTPException(
                     status.HTTP_401_UNAUTHORIZED,
-                    f"Invalid or expired {self.token_type} token!",
+                    ErrorMessages.INVALID_OR_EXPIRED_TOKEN.format(self.token_type),
                 )
 
             return Token(
@@ -72,5 +73,5 @@ class JwtService(BaseService):
         except JWTError:
             raise HTTPException(
                 status.HTTP_401_UNAUTHORIZED,
-                f"Invalid or expired {self.token_type} token!",
+                ErrorMessages.INVALID_OR_EXPIRED_TOKEN.format(self.token_type),
             )

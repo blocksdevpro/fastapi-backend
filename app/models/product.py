@@ -1,4 +1,5 @@
 # app/models/product.py
+from app.schemas.product import ProductResponse
 from app.models.common import BaseMixin
 from typing import TYPE_CHECKING
 from uuid import UUID as PyUUID
@@ -33,13 +34,4 @@ class Product(BaseMixin, Base):
         return f"Product(id={self.id}, name={self.name}, description={self.description} price={self.price} stock={self.stock})"
 
     def to_response(self):
-        return {
-            "id": str(self.id),
-            "user_id": str(self.user_id),
-            "name": self.name,
-            "description": self.description,
-            "price": self.price,
-            "stock": self.stock,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at,
-        }
+        return ProductResponse.model_validate(self, from_attributes=True)

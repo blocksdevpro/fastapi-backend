@@ -19,6 +19,10 @@ async_engine = create_async_engine(
     pool_pre_ping=settings.DB_POOL_PRE_PING,
     pool_timeout=settings.DB_POOL_TIMEOUT,
     pool_recycle=settings.DB_POOL_RECYCLE,
+    connect_args={
+        "server_settings": {"jit": "off"},
+        "statement_cache_size": 0  # Disable statement caching
+    }
 )
 
 # create async_session from async_engine

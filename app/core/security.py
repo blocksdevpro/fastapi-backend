@@ -1,3 +1,4 @@
+from app.core.messages import ErrorMessages
 from typing import Annotated
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -11,7 +12,7 @@ def get_bearer_token(
     if not credentials or not credentials.credentials:
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED,
-            "Authentication required",
+            ErrorMessages.UNAUTHORIZED,
             headers={"WWW-Authenticate": "Bearer"},
         )
     return credentials.credentials

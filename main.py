@@ -37,7 +37,7 @@ app.state.limiter = limiter
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -52,10 +52,6 @@ app.add_exception_handler(HTTPException, http_exception_handler)  # type: ignore
 app.add_exception_handler(RequestValidationError, validation_exception_handler)  # type: ignore
 app.add_exception_handler(RateLimitExceeded, rate_limit_exception_handler)  # type: ignore
 
-
-@app.get(settings.API_V1_PREFIX + "/health")
-async def read_health():
-    return {"status": "HEALTHY"}
 
 
 if __name__ == "__main__":

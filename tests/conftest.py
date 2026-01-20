@@ -71,6 +71,10 @@ async def setup_test_database():
         pool_timeout=30,
         pool_recycle=1800,
         query_cache_size=0,
+        connect_args={
+            "server_settings": {"jit": "off"},
+            "statement_cache_size": 0,  # Disable statement caching
+        },
     )
 
     # Create async_session from async_engine

@@ -1,5 +1,6 @@
 # app/handlers/response.py
 
+from app.core.messages import ErrorMessages
 from slowapi.errors import RateLimitExceeded
 from functools import wraps
 from typing import Any, Callable, Union
@@ -32,7 +33,9 @@ def response_handler() -> Callable:
                 raise
             except Exception as e:
                 logger.exception(f"Unhandled error in {func.__name__}: {e}")
-                raise HTTPException(status_code=500, detail="Internal Server Error")
+                raise HTTPException(
+                    status_code=500, detail=ErrorMessages.INTERNAL_SERVER_ERROR
+                )
 
             # transform models using their to_response() func.
             result = transform_model_to_response(result)

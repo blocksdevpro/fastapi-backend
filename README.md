@@ -7,8 +7,12 @@ A robust, async FastAPI backend starter template featuring authentication, produ
 - **FastAPI**: High-performance, easy-to-learn, fast-to-code, ready-for-production.
 - **Async SQLAlchemy**: Fully asynchronous ORM with PostgreSQL support.
 - **Authentication**: JWT-based auth with login, refresh, revoke, and logout.
+- **Role-Based Access Control (RBAC)**: User roles (`user`, `admin`) for permission management.
+- **Security**: Password reset, email verification, and session management (view/revoke active sessions).
+- **Email Service**: Integrated with `Resend` for sending transactional emails.
 - **Pydantic v2**: Data validation and settings management using the latest Pydantic.
 - **Rate Limiting**: Built-in rate limiting using `slowapi`.
+- **Standardized Error Handling**: Centralized error messages for consistent API responses.
 - **Testing**: Ready-to-go test suite using `pytest`.
 - **Linting & Formatting**: configured with `ruff`.
 
@@ -18,7 +22,8 @@ A robust, async FastAPI backend starter template featuring authentication, produ
 - **Framework**: FastAPI
 - **Database**: PostgreSQL (Asyncpg)
 - **ORM**: SQLAlchemy (Async)
-- **Migrations**: (Planned/Not yet configured) -> Recommend establishing `alembic`
+- **Migrations**: Alembic
+- **Email**: Resend
 - **Package Manager**: standard `pip` or `poetry` (requirements.txt provided)
 
 ## 📋 Prerequisites
@@ -58,19 +63,39 @@ Create a `.env` file in the root directory. You can use the provided `.env.examp
 
 ```python
 # Database
-DATABASE_URL = "MAIN_DB_URL"
+DATABASE_URL = "postgresql+asyncpg://user:password@localhost:5432/dbname"
 
 # Security
 JWT_ALGORITHM = "HS256"
-
-JWT_ACCESS_SECRET_KEY = "SUPER_SECRET_JWT_ACCESS_SECRET_KEY"
-JWT_REFRESH_SECRET_KEY = "SUPER_SECRET_JWT_REFRESH_SECRET_KEY"
-
+JWT_ACCESS_SECRET_KEY = "your-access-secret-key"
+JWT_REFRESH_SECRET_KEY = "your-refresh-secret-key"
 JWT_ACCESS_EXPIRE_MINUTES = 15
 JWT_REFRESH_EXPIRE_MINUTES = 1440
+
+# Verification & Password Reset
+VERIFICATION_TOKEN_SECRET = "your-verification-secret"
+PASSWORD_RESET_EXPIRE_MINUTES = 15
+EMAIL_VERIFICATION_EXPIRE_MINUTES = 1440
+
+# Email (Resend)
+RESEND_API_KEY = "re_123456789"
+RESEND_FROM_EMAIL = "onboarding@resend.dev"
+RESEND_FROM_NAME = "FastAPI Backend"
+
+# Frontend
+FRONTEND_URL = "http://localhost:3000"
+CORS_ORIGINS = '["http://localhost:3000", "http://localhost:8000"]'
 ```
 
-### 5. Run the Application
+### 5. Run Migrations
+
+Initialize the database schema:
+
+```bash
+alembic upgrade head
+```
+
+### 6. Run the Application
 
 You can use the included `Makefile` commands for convenience:
 
@@ -89,6 +114,7 @@ uvicorn main:app --reload
 
 The API will be available at `http://localhost:8000`.
 API Documentation (Swagger UI) is available at `http://localhost:8000/api/docs`.
+Health check endpoint: `http://localhost:8000/api/health`
 
 ## 🧪 Running Tests
 
@@ -113,7 +139,8 @@ This runs `ruff check --fix` and `ruff format`.
 ```
 .
 ├── app
-│   ├── core          # Config, logger, security settings
+│   ├── api           # API endpoints grouping
+│   ├── core          # Config, logger, security settings, messages
 │   ├── db            # Database connection & session
 │   ├── handlers      # Exception handlers & middlewares
 │   ├── models        # SQLAlchemy database models
@@ -121,6 +148,7 @@ This runs `ruff check --fix` and `ruff format`.
 │   ├── schemas       # Pydantic models (Request/Response)
 │   ├── services      # Business logic layer
 │   └── utils         # Helper functions
+├── migrations        # Alembic migration scripts
 ├── tests             # Pytest suite
 ├── main.py           # Application entry point
 ├── Makefile          # Handy commands

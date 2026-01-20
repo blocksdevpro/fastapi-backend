@@ -1,3 +1,5 @@
+from app.core.messages import SuccessMessages
+from app.core.messages import ErrorMessages
 from uuid import UUID
 from sqlalchemy.exc import IntegrityError
 from app.models.session import Session
@@ -62,7 +64,7 @@ class AuthService(BaseService):
     async def _get_user_by_id(self, user_id: UUID) -> User:
         user = await self._find_user_by_id(user_id)
         if not user:
-            raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
+            raise HTTPException(status.HTTP_404_NOT_FOUND, ErrorMessages.USER_NOT_FOUND)
         return user
 
     async def _create_user(self, name: str, email: str, password: str):
@@ -78,7 +80,9 @@ class AuthService(BaseService):
             password_hash = await self.password_service.hash_password(payload.password)
             user = await self._create_user(payload.name, payload.email, password_hash)
         except IntegrityError:
-            raise HTTPException(status.HTTP_400_BAD_REQUEST, "User already exists")
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST, ErrorMessages.USER_ALREADY_EXISTS
+            )
 
         tokens = await self.session_service.create_tokens(request, user)
 
@@ -90,7 +94,9 @@ class AuthService(BaseService):
             payload.password,
             user.password_hash,  # pyrefly: ignore [bad-argument-type]
         ):
-            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid credentials")
+            raise HTTPException(
+                status.HTTP_401_UNAUTHORIZED, ErrorMessages.INVALID_CREDENTIALS
+            )
 
         tokens = await self.session_service.create_tokens(request, user)
 
@@ -125,7 +131,8 @@ class AuthService(BaseService):
         )
         if not user:
             raise HTTPException(
-                status.HTTP_401_UNAUTHORIZED, "Invalid or expired access token"
+                status.HTTP_401_UNAUTHORIZED,
+                ErrorMessages.INVALID_OR_EXPIRED_TOKEN.format("access"),
             )
         return user
 
@@ -158,9 +165,7 @@ class AuthService(BaseService):
                 TokenType.PASSWORD_RESET,
             )
             await self.email_service.send_password_reset_email(user.email, token)
-        return MessageResponse(
-            message="If the email exists, a password reset link has been sent."
-        )
+        return MessageResponse(message=SuccessMessages.PASSWORD_RESET_EMAIL_SENT)
 
     async def reset_password(
         self, request: Request, payload: ResetPasswordRequest
@@ -176,12 +181,12 @@ class AuthService(BaseService):
         # Consume the token (single-use)
         await self.verification_service.consume_token(token_record)
         await self.session.commit()
-        return MessageResponse(message="Password reset successfully")
+        return MessageResponse(message=SuccessMessages.PASSWORD_RESET)
 
     async def send_verification_email(self, user: User) -> MessageResponse:
         """Send email verification link to the current user."""
         if user.email_verified:
-            return MessageResponse(message="Email is already verified.")
+            return MessageResponse(message=SuccessMessages.EMAIL_ALREADY_VERIFIED)
 
         token = await self.verification_service.create_token(
             user.id,  # pyrefly: ignore [bad-argument-type]
@@ -191,7 +196,7 @@ class AuthService(BaseService):
             user.email,  # pyrefly: ignore [bad-argument-type]
             token,
         )
-        return MessageResponse(message="Verification email sent.")
+        return MessageResponse(message=SuccessMessages.VERIFICATION_EMAIL_SENT)
 
     async def verify_email(
         self, request: Request, payload: VerifyEmailRequest
@@ -207,7 +212,7 @@ class AuthService(BaseService):
         # Consume the token
         await self.verification_service.consume_token(token_record)
         await self.session.commit()
-        return MessageResponse(message="Email verified successfully.")
+        return MessageResponse(message=SuccessMessages.EMAIL_VERIFIED)
 
     async def change_password(
         self, request: Request, user: User, payload: ChangePasswordRequest
@@ -216,7 +221,9 @@ class AuthService(BaseService):
             payload.old_password,
             user.password_hash,  # pyrefly: ignore [bad-argument-type]
         ):
-            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid old password")
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST, ErrorMessages.INVALID_CREDENTIALS
+            )
 
         user.password_hash = await self.password_service.hash_password(
             payload.new_password
@@ -225,4 +232,4 @@ class AuthService(BaseService):
         await self.session.commit()
         await self.session.refresh(user)
 
-        return MessageResponse(message="Password changed successfully")
+        return MessageResponse(message=SuccessMessages.PASSWORD_CHANGED)

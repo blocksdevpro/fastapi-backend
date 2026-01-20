@@ -1,5 +1,6 @@
 # app/dependencies.py
 
+from app.core.messages import ErrorMessages
 from typing import Annotated
 from fastapi import Depends, HTTPException, status
 from app.db.session import get_session, AsyncSession
@@ -44,7 +45,7 @@ async def get_current_admin_user(
     if not current_user.is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required",
+            detail=ErrorMessages.NOT_ENOUGH_PERMISSIONS,
         )
     return current_user
 

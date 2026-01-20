@@ -1,29 +1,9 @@
-import re
+from app.schemas.common import UUIDStr
+from app.schemas.common import PasswordField
 from datetime import datetime
 from typing import Optional, Annotated
-from pydantic import BaseModel, Field, EmailStr, AfterValidator
+from pydantic import BaseModel, Field, EmailStr
 from app.schemas.user import UserResponse
-
-
-def password_validator(password: str) -> str:
-    if " " in password:
-        raise ValueError("Password must not contain spaces")
-    if not re.search(r"[A-Z]", password):
-        raise ValueError("Password must contain at least one uppercase letter")
-    if not re.search(r"[a-z]", password):
-        raise ValueError("Password must contain at least one lowercase letter")
-    if not re.search(r"\d", password):
-        raise ValueError("Password must contain at least one number")
-    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
-        raise ValueError("Password must contain at least one special character")
-
-    return password
-
-
-# Create a reusable type
-PasswordField = Annotated[
-    str, Field(..., min_length=8, max_length=24), AfterValidator(password_validator)
-]
 
 
 class SignupRequest(BaseModel):
@@ -97,9 +77,9 @@ class MessageResponse(BaseModel):
 
 
 class SessionResponse(BaseModel):
-    id: Annotated[str, Field(..., examples=["123e4567-e89b-12d3-a456-426614174000"])]
+    id: Annotated[UUIDStr, Field(..., examples=["123e4567-e89b-12d3-a456-426614174000"])]
     user_id: Annotated[
-        str, Field(..., examples=["123e4567-e89b-12d3-a456-426614174000"])
+        UUIDStr, Field(..., examples=["123e4567-e89b-12d3-a456-426614174000"])
     ]
     device_id: Annotated[str, Field(..., examples=["1908b47bf9ed06f5"])]
     ip_address: Annotated[str, Field(..., examples=["127.0.0.1"])]
