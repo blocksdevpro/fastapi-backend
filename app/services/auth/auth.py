@@ -29,6 +29,7 @@ from app.schemas.auth import (
 from app.schemas.user import UpdateUserRequest
 
 from app.services.auth.session import Token, SessionService
+from fastapi import BackgroundTasks
 
 
 class AuthService(BaseService):
@@ -155,7 +156,7 @@ class AuthService(BaseService):
         return user
 
     async def forget_password(
-        self, request: Request, payload: ForgetPasswordRequest
+        self, request: Request, payload: ForgetPasswordRequest, background_tasks: BackgroundTasks
     ) -> MessageResponse:
         user = await self._find_user(payload.email)
         # Security: Always return success message to prevent email enumeration
@@ -164,7 +165,7 @@ class AuthService(BaseService):
                 user.id,  # pyrefly: ignore [bad-argument-type]
                 TokenType.PASSWORD_RESET,
             )
-            await self.email_service.send_password_reset_email(user.email, token)
+            background_tasks.add_task(self.email_service.send_password_reset_email, user.email, token)
         return MessageResponse(message=SuccessMessages.PASSWORD_RESET_EMAIL_SENT)
 
     async def reset_password(
@@ -183,7 +184,7 @@ class AuthService(BaseService):
         await self.session.commit()
         return MessageResponse(message=SuccessMessages.PASSWORD_RESET)
 
-    async def send_verification_email(self, user: User) -> MessageResponse:
+    async def send_verification_email(self, user: User, background_tasks: BackgroundTasks) -> MessageResponse:
         """Send email verification link to the current user."""
         if user.email_verified:
             return MessageResponse(message=SuccessMessages.EMAIL_ALREADY_VERIFIED)
@@ -192,7 +193,8 @@ class AuthService(BaseService):
             user.id,  # pyrefly: ignore [bad-argument-type]
             TokenType.EMAIL_VERIFICATION,
         )
-        await self.email_service.send_verification_email(
+        background_tasks.add_task(
+            self.email_service.send_verification_email,
             user.email,  # pyrefly: ignore [bad-argument-type]
             token,
         )

@@ -1,6 +1,5 @@
-# app/routers/auth.py
 from uuid import UUID
-from fastapi import Request, Path
+from fastapi import Request, Path, BackgroundTasks
 
 from app.dependencies import (
     AuthServiceDependency,
@@ -189,13 +188,14 @@ async def forget_password(
     request: Request,
     payload: ForgetPasswordRequest,
     auth_service: AuthServiceDependency,
+    background_tasks: BackgroundTasks,
 ):
     """
     Request password reset.
 
     This endpoint sends a password reset link to the provided email address, if it exists.
     """
-    return await auth_service.forget_password(request, payload)
+    return await auth_service.forget_password(request, payload, background_tasks)
 
 
 @router.post(
@@ -248,9 +248,10 @@ async def send_verification_email(
     request: Request,
     user: CurrentUserDependency,
     auth_service: AuthServiceDependency,
+    background_tasks: BackgroundTasks,
 ):
     """Send email verification link to the currently logged-in user."""
-    return await auth_service.send_verification_email(user)
+    return await auth_service.send_verification_email(user, background_tasks)
 
 
 @router.post(
