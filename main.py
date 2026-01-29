@@ -53,7 +53,6 @@ app.add_exception_handler(RequestValidationError, validation_exception_handler) 
 app.add_exception_handler(RateLimitExceeded, rate_limit_exception_handler)  # type: ignore
 
 
-
 if __name__ == "__main__":
     import uvicorn
 

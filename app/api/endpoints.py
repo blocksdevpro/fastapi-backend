@@ -23,11 +23,9 @@ async def health_check(session: SessionDependency):
         db_status = "healthy"
     except Exception:
         db_status = "unhealthy"
-    
+
     return {
         "status": "healthy" if db_status == "healthy" else "degraded",
         "version": settings.VERSION,
-        "services": {
-            "database": db_status
-        }
+        "services": {"database": db_status},
     }

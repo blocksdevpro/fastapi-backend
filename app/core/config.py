@@ -59,6 +59,7 @@ class ProductionSettings(AppSettings):
     LOG_LEVEL: str = "INFO"
     CORS_ORIGINS: list[str]  # Must be explicitly set
 
+
 class TestSettings(AppSettings):
     DATABASE_URL: str
 

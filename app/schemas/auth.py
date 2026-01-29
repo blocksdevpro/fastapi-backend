@@ -77,7 +77,9 @@ class MessageResponse(BaseModel):
 
 
 class SessionResponse(BaseModel):
-    id: Annotated[UUIDStr, Field(..., examples=["123e4567-e89b-12d3-a456-426614174000"])]
+    id: Annotated[
+        UUIDStr, Field(..., examples=["123e4567-e89b-12d3-a456-426614174000"])
+    ]
     user_id: Annotated[
         UUIDStr, Field(..., examples=["123e4567-e89b-12d3-a456-426614174000"])
     ]

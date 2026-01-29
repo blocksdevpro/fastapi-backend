@@ -1,9 +1,9 @@
 import re
 from pydantic import BaseModel, Field
 from typing import Literal, Optional, Annotated
-from typing import Annotated
 from pydantic import BeforeValidator, PlainSerializer, AfterValidator
 from uuid import UUID
+
 
 class QueryParams(BaseModel):
     query: Annotated[Optional[str], Field("", description="Search query")]
@@ -27,6 +27,7 @@ class QueryParams(BaseModel):
 
 # Functions
 
+
 def password_validator(password: str) -> str:
     if " " in password:
         raise ValueError("Password must not contain spaces")
@@ -41,11 +42,13 @@ def password_validator(password: str) -> str:
 
     return password
 
+
 def validate_uuid(value):
     """Convert string or UUID to UUID"""
     if isinstance(value, str):
         return UUID(value)
     return value
+
 
 def serialize_uuid(value):
     """Convert UUID to string"""
@@ -58,7 +61,7 @@ def serialize_uuid(value):
 UUIDStr = Annotated[
     UUID,
     BeforeValidator(validate_uuid),
-    PlainSerializer(serialize_uuid, return_type=str)
+    PlainSerializer(serialize_uuid, return_type=str),
 ]
 
 # reusable type for Password
